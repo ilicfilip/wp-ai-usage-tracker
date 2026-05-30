@@ -1,0 +1,111 @@
+name: Playground Comment
+
+# Builds the plugin and posts a one-click WordPress Playground preview link on
+# every pull request. Modelled on the Progress Planner repo's playground.yml,
+# adapted because this repo's name differs from the plugin folder/slug, and
+# because the React dashboard must be built before packaging.
+
+on:
+  pull_request:
+
+# The plugin SLUG / folder name (and main file are <slug>.php). This is NOT the
+# repository name — keep them decoupled.
+env:
+  PLUGIN_SLUG: wp-ai-rate-limiter
+
+jobs:
+  playground:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      actions: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # --- Build PHP + JS so the packaged plugin is runnable in Playground. ---
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+          tools: composer
+
+      - name: Install Composer dependencies (no dev)
+        uses: ramsey/composer-install@v3
+        with:
+          composer-options: '--no-dev --prefer-dist --no-scripts'
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Build dashboard assets
+        run: |
+          npm ci
+          npm run build
+
+      # --- Stage the plugin under a folder named exactly like the slug. ---
+      - name: Prepare plugin folder
+        id: prep
+        run: |
+          set -euxo pipefail
+          STAGE="pkg"
+          mkdir -p "$STAGE/$PLUGIN_SLUG"
+          rsync -a \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='node_modules' \
+            --exclude='.wordpress-org' \
+            --exclude="$STAGE" \
+            ./ "$STAGE/$PLUGIN_SLUG/"
+          echo "PKG_DIR=$STAGE/$PLUGIN_SLUG" >> "$GITHUB_OUTPUT"
+
+      - name: Tag version with PR number
+        run: |
+          set -euxo pipefail
+          PLUGIN_FILE="${{ steps.prep.outputs.PKG_DIR }}/${PLUGIN_SLUG}.php"
+          PR_NUMBER="${{ github.event.number }}"
+          CURRENT_VERSION=$(grep -o "Version:[[:space:]]*[0-9.]*" "$PLUGIN_FILE" | sed 's/Version:[[:space:]]*//')
+          NEW_VERSION="${CURRENT_VERSION}b - PR ${PR_NUMBER}"
+          sed -i "s/Version:[[:space:]]*[0-9.]*/Version:           ${NEW_VERSION}/" "$PLUGIN_FILE"
+
+      # --- Build the blueprint, swapping the slug for the artifact ZIP URL. ---
+      - name: Prepare blueprint with artifact link
+        id: blueprint
+        run: |
+          set -euxo pipefail
+          ARTIFACT_URL="https://nightly.link/${{ github.repository }}/actions/runs/${{ github.run_id }}/${PLUGIN_SLUG}.zip"
+          BLUEPRINT=$(node -e "
+            const fs = require('fs');
+            const bp = JSON.parse(fs.readFileSync('.wordpress-org/blueprints/playground.json', 'utf8'));
+            bp.plugins = bp.plugins.map(p => p === '${PLUGIN_SLUG}' ? '$ARTIFACT_URL' : p);
+            console.log(JSON.stringify(bp));
+          ")
+          ENCODED_BLUEPRINT=$(echo -n "$BLUEPRINT" | base64 -w 0)
+          echo "blueprint=$ENCODED_BLUEPRINT" >> "$GITHUB_OUTPUT"
+
+      # Upload the FOLDER; the artifact service zips it, preserving the slug folder.
+      - name: Upload plugin artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.PLUGIN_SLUG }}
+          path: ${{ steps.prep.outputs.PKG_DIR }}
+          compression-level: 0
+
+      - name: Comment with Playground link
+        uses: mshick/add-pr-comment@v2
+        with:
+          message: |
+            ### 🧪 Test on WordPress Playground
+
+            [**Open this PR in WordPress Playground →**](https://playground.wordpress.net/#${{ steps.blueprint.outputs.blueprint }})
+
+            or [download the plugin zip](https://nightly.link/${{ github.repository }}/actions/runs/${{ github.run_id }}/${{ env.PLUGIN_SLUG }}.zip).
+
+            > Note: this plugin needs **WordPress 7.0+** (the AI Client API) and a configured
+            > AI provider to capture real usage. In Playground you'll see the dashboard, the
+            > empty state, and the Limits UI — but no live AI requests (no provider key).

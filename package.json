@@ -1,0 +1,18 @@
+{
+	"name": "wp-ai-rate-limiter",
+	"version": "0.1.0",
+	"description": "AI Usage Tracker dashboard — React admin UI for the WordPress 7.0 AI Client usage tracker.",
+	"author": "Filip Ilic",
+	"license": "GPL-2.0-or-later",
+	"private": true,
+	"scripts": {
+		"build": "wp-scripts build --webpack-src-dir=assets/src --output-path=build",
+		"start": "wp-scripts start --webpack-src-dir=assets/src --output-path=build",
+		"lint:js": "wp-scripts lint-js assets/src",
+		"lint:css": "wp-scripts lint-style \"assets/src/**/*.scss\"",
+		"format": "wp-scripts format assets/src"
+	},
+	"devDependencies": {
+		"@wordpress/scripts": "^30.0.0"
+	}
+}

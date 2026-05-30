@@ -1,0 +1,49 @@
+parameters:
+  level: 10
+  reportUnmatchedIgnoredErrors: false
+  paths:
+    - ./src
+    - ./wp-ai-rate-limiter.php
+    - ./uninstall.php
+  ignoreErrors:
+    # --- Type-detail noise we don't enforce (mirrors progress-planner). ---
+    - identifier: missingType.iterableValue
+    - identifier: missingType.generics
+    - identifier: binaryOp.invalid
+    - identifier: cast.string
+    - identifier: cast.int
+    - identifier: cast.double
+    - identifier: offsetAccess.nonOffsetAccessible
+    - identifier: echo.nonString
+    - identifier: encapsedStringPart.nonString
+    - identifier: assignOp.invalid
+    - identifier: assign.propertyType
+    - identifier: method.nonObject
+    - identifier: property.nonObject
+    - identifier: foreach.nonIterable
+    - identifier: argument.type
+    - identifier: return.type
+
+    # --- Single-file analysis can't see constants defined in the main plugin
+    #     file or core constants loaded at runtime. Guarded/defined for real. ---
+    - identifier: constant.notFound
+
+    # --- PHPStan over-narrows the static call-site cache (which legitimately
+    #     stores null for negative lookups) and the reflection-based SDK probe
+    #     whose classes are unknown at analysis time. ---
+    - identifier: function.alreadyNarrowedType
+    - identifier: notIdentical.alwaysTrue
+    - identifier: booleanAnd.rightAlwaysTrue
+    - identifier: deadCode.unreachable
+    - identifier: argument.unresolvableType
+    - identifier: method.unresolvableReturnType
+
+    # --- The WordPress 7.0 AI Client + bundled php-ai-client SDK have no
+    #     PHPStan stubs yet; all access is runtime-guarded. ---
+    - '#Function wp_ai_client_prompt not found.#'
+    - '#unknown class WP_AI_Client_Prompt_Builder.#'
+    - '#unknown class .*GenerativeAiResult.*#'
+    - '#Call to (static )?method [a-zA-Z0-9_]+\(\) on an unknown class .*#'
+
+    # --- The optional WordPress/ai logging plugin is not a dependency. ---
+    - '#Function wpai_[a-zA-Z0-9_]+ not found.#'

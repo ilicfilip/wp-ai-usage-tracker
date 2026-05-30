@@ -1,0 +1,56 @@
+name: Lint
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        php_version: ['7.4', '8.0', '8.1', '8.2', '8.3', '8.4']
+
+    name: "Lint: PHP ${{ matrix.php_version }}"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install PHP for the composer install
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php_version }}
+          coverage: none
+
+      # The lint stage doesn't use code style, so drop WPCS / PHPCompatibility
+      # which would otherwise constrain the installable PHP range.
+      - name: 'Composer: remove PHPCompatibility'
+        run: composer remove --no-update --dev phpcompatibility/phpcompatibility-wp --no-scripts --no-interaction
+      - name: 'Composer: remove WPCS'
+        run: composer remove --no-update --dev wp-coding-standards/wpcs --no-scripts --no-interaction
+
+      - name: Install Composer dependencies
+        uses: ramsey/composer-install@v3
+        with:
+          custom-cache-suffix: $(date -u "+%Y-%m")
+
+      - name: Install PHP for the actual lint
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php_version }}
+          ini-values: zend.assertions=1, error_reporting=-1, display_errors=On
+          coverage: none
+          tools: cs2pr
+
+      - name: Lint against parse errors
+        run: composer lint -- --checkstyle | cs2pr

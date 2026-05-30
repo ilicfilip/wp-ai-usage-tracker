@@ -1,0 +1,18 @@
+# Dependencies
+/vendor/
+/node_modules/
+
+# Composer lock is committed for apps; this is a plugin, keep it for reproducible CI.
+# (composer.lock is intentionally NOT ignored.)
+
+# Build artifacts (compiled by @wordpress/scripts; rebuilt in CI/release).
+/build/
+
+# Tooling reports
+/phpcs-report.xml
+/coverage-html/
+.phpunit.result.cache
+
+# OS / editor
+.DS_Store
+*.log

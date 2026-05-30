@@ -1,0 +1,26 @@
+{
+	"$schema": "https://playground.wordpress.net/blueprint-schema.json",
+	"landingPage": "/wp-admin/tools.php?page=wp-ai-usage",
+	"preferredVersions": {
+		"php": "8.3",
+		"wp": "latest"
+	},
+	"features": {
+		"networking": true
+	},
+	"plugins": [
+		"wp-ai-rate-limiter"
+	],
+	"steps": [
+		{
+			"step": "login"
+		},
+		{
+			"step": "defineWpConfigConsts",
+			"consts": {
+				"IS_PLAYGROUND_PREVIEW": true,
+				"WP_ENVIRONMENT_TYPE": "development"
+			}
+		}
+	]
+}

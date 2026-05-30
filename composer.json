@@ -1,0 +1,46 @@
+{
+	"name": "ilicfilip/wp-ai-rate-limiter",
+	"description": "AI Usage Tracker — tracks WordPress 7.0 AI Client usage per plugin and per user.",
+	"type": "wordpress-plugin",
+	"license": "GPL-2.0-or-later",
+	"authors": [
+		{
+			"name": "Filip Ilic",
+			"email": "filip@emilia.capital"
+		}
+	],
+	"require": {
+		"php": ">=7.4"
+	},
+	"require-dev": {
+		"wp-coding-standards/wpcs": "^3.1",
+		"phpcompatibility/phpcompatibility-wp": "*",
+		"php-parallel-lint/php-parallel-lint": "^1.3",
+		"phpstan/phpstan": "^2.0",
+		"szepeviktor/phpstan-wordpress": "^2.0",
+		"phpstan/extension-installer": "^1.4"
+	},
+	"scripts": {
+		"check-cs": [
+			"@php ./vendor/bin/phpcs -s"
+		],
+		"fix-cs": [
+			"@php ./vendor/bin/phpcbf"
+		],
+		"lint": [
+			"@php ./vendor/php-parallel-lint/php-parallel-lint/parallel-lint . -e php --show-deprecated --exclude vendor --exclude node_modules --exclude .git"
+		],
+		"phpstan": [
+			"@php ./vendor/bin/phpstan analyse --memory-limit=2048M"
+		]
+	},
+	"config": {
+		"platform": {
+			"php": "8.3"
+		},
+		"allow-plugins": {
+			"dealerdirect/phpcodesniffer-composer-installer": true,
+			"phpstan/extension-installer": true
+		}
+	}
+}

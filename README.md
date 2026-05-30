@@ -168,3 +168,5 @@ See [docs/TESTING.md](docs/TESTING.md).
 ## License
 
 GPL-2.0-or-later.
+
+<!-- Public repo: Playground preview links are now available on PRs. -->

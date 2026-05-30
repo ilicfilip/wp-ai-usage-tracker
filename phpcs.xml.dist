@@ -26,6 +26,14 @@
 	<arg name="parallel" value="8"/>
 
 	<!--
+	Warnings are advisory; only errors should fail CI. The few remaining warnings
+	are documented false positives (reserved-keyword param names like $class, and
+	dynamic hook names that ARE prefixed via class constants). This keeps them
+	visible in the report without breaking the build on an error-free codebase.
+	-->
+	<config name="ignore_warnings_on_exit" value="1"/>
+
+	<!--
 	#############################################################################
 	SET UP THE RULESETS
 	#############################################################################

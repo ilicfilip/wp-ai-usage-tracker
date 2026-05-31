@@ -17,28 +17,12 @@ use WP_AI_Rate_Limiter\Periods\Window;
 class Enforcer_Test extends AIUT_TestCase {
 
 	/**
-	 * @var Limit_Repository
-	 */
-	private $repo;
-
-	public function set_up() {
-		parent::set_up();
-		$this->repo = new Limit_Repository();
-	}
-
-	/**
-	 * Seed current-month usage for plugin "acme".
+	 * Seed current-month cost usage for plugin "acme".
 	 *
 	 * @param int $cost_micros Cost to record.
 	 */
 	private function seed_cost( $cost_micros ) {
-		Counter_Store::increment(
-			'plugin',
-			'acme',
-			'month',
-			Window::current_period_key( 'month' ),
-			[ 'est_cost_micros' => $cost_micros ]
-		);
+		$this->seed_plugin_month_usage( 'acme', [ 'est_cost_micros' => $cost_micros ] );
 	}
 
 	/**
@@ -47,21 +31,7 @@ class Enforcer_Test extends AIUT_TestCase {
 	 * @param array<string,mixed> $overrides Overrides.
 	 */
 	private function add_hard_limit( array $overrides = [] ) {
-		$this->repo->save(
-			array_merge(
-				[
-					'scope_type'     => 'plugin',
-					'scope_key'      => 'acme',
-					'limit_type'     => 'cost',
-					'period_kind'    => 'month',
-					'threshold'      => 1000,
-					'enforcement'    => 'hard',
-					'min_confidence' => 'medium',
-					'enabled'        => 1,
-				],
-				$overrides
-			)
-		);
+		$this->repo->save( $this->base_limit( $overrides ) );
 	}
 
 	/**

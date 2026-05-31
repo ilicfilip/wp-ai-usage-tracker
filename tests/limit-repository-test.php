@@ -13,37 +13,15 @@ use WP_AI_Rate_Limiter\Limits\Limit_Repository;
 class Limit_Repository_Test extends AIUT_TestCase {
 
 	/**
-	 * Repository under test.
-	 *
-	 * @var Limit_Repository
-	 */
-	private $repo;
-
-	public function set_up() {
-		parent::set_up();
-		$this->repo = new Limit_Repository();
-	}
-
-	/**
-	 * A base limit payload with overridable fields.
+	 * A limit payload defaulting to a $1.00 monthly hard cost cap — the
+	 * repository tests assert on this larger threshold. Delegates to the shared
+	 * base_limit() and just raises the default threshold.
 	 *
 	 * @param array<string,mixed> $overrides Field overrides.
 	 * @return array<string,mixed>
 	 */
 	private function limit( array $overrides = [] ) {
-		return array_merge(
-			[
-				'scope_type'     => 'plugin',
-				'scope_key'      => 'acme',
-				'limit_type'     => 'cost',
-				'period_kind'    => 'month',
-				'threshold'      => 1000000,
-				'enforcement'    => 'hard',
-				'min_confidence' => 'medium',
-				'enabled'        => 1,
-			],
-			$overrides
-		);
+		return $this->base_limit( array_merge( [ 'threshold' => 1000000 ], $overrides ) );
 	}
 
 	/**

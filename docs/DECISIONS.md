@@ -75,7 +75,7 @@ through every "real" path to the input-only chars/4 estimate. Root cause: token 
 lives behind **typed DTO getter methods**, not array keys, so shape-probing
 (`$arr['usage']['output_tokens']` etc.) found nothing. The fix added
 `capture_from_core_event()` as the primary path; verified live capturing `anthropic /
-claude-opus-4-8`, real input+output tokens, `estimated = 0` (see `BUILD_STATUS.md`).
+claude-opus-4-8`, real input+output tokens, `estimated = 0`.
 
 Every DTO access is guarded with `method_exists()` (on the *result/usage DTOs*, which are
 plain getter objects — not the magic-method builder) so a future SDK shape change degrades
@@ -188,7 +188,7 @@ call site (`file:line`) in `$call_site_cache` for the request.
 run in production.
 
 **Why.** Measured cost is ~**0.0004 ms/call** with `IGNORE_ARGS` + the depth cap — about
-one-millionth of a typical ~1s AI request (see `BUILD_STATUS.md`). `IGNORE_ARGS` avoids
+one-millionth of a typical ~1s AI request. `IGNORE_ARGS` avoids
 copying (potentially huge prompt) argument values; the depth cap bounds the walk; the
 per-call-site memo means repeated calls from the same code location don't re-walk the
 filesystem. Speed is a non-issue.

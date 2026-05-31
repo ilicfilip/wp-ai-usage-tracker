@@ -134,10 +134,7 @@ custom alert channels, pricing overrides, capability/recipient filters) and a RE
 | [docs/DECISIONS.md](docs/DECISIONS.md) | **Why** things are built this way (read this first for a takeover) |
 | [docs/TESTING.md](docs/TESTING.md) | Build, quality gates, and the live/no-cost test workflow |
 | `CLAUDE.md` | Guidance for AI coding agents working in this repo |
-| `BUILD_STATUS.md` | Point-in-time build/verification status |
 
-Background design docs (problem framing, market investigation, phase specs) live outside the
-repo in `<private-docs>/WP_AI_Rate_Limiter_*.md`.
 
 ## Project layout
 

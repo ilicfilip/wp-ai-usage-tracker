@@ -22,10 +22,8 @@ one shared key, which the provider billing dashboard cannot see.
   exceed a *hard* limit by returning `true` from `wp_ai_client_prevent_prompt`. **Stays
   observe-only until a hard limit is configured**, and fails open on any error.
 
-Background docs live outside the repo in `<private-docs>/`:
-`WP_AI_Rate_Limiter_Handoff.md`, `_Architecture.md`, `_Investigation.md`,
-`_Phase1_Spec.md`, `_Phase2_Spec.md`. The specs are authoritative for scope.
-`BUILD_STATUS.md` (in this repo) tracks what's built/verified.
+Background design docs (architecture, investigation, phase specs) are kept
+privately by the maintainer and are not part of this public repository.
 
 ## Hard invariants (do not violate)
 
@@ -219,8 +217,7 @@ enqueue in `class-settings-page.php` must reference that exact name.
 
 ### Live testing
 
-There is a real WP 7.0 Valet install at `<wordpress-root>` (URL `http://your-site.test`, admin
-an admin account) with the Anthropic provider configured. The plugin is symlinked into
+Develop against a real WordPress 7.0 install with an AI provider configured. The plugin is symlinked into
 its `wp-content/plugins/`. To test real capture, activate a small caller plugin that runs
 `do_action('wp_ai_rate_limiter_attribute','slug'); wp_ai_client_prompt('hi')->generate_text();`
 then check Tools → AI Usage. **Real AI calls cost money — keep prompts minimal and few.**
@@ -228,7 +225,7 @@ then check Tools → AI Usage. **Real AI calls cost money — keep prompts minim
 Already verified live (2026-05-30): activation + schema, all 6 REST routes (200 for an
 admin), the dashboard rendering across all four views, attribution via the self-ID hook
 (`confidence = high`), and real token/provider/model capture via
-`wp_ai_client_after_generate_result` (`estimated = 0`). See `BUILD_STATUS.md` for detail.
+`wp_ai_client_after_generate_result` (`estimated = 0`).
 
 ## CI
 

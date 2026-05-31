@@ -111,31 +111,32 @@ install_test_suite() {
 
 		# Fetch the PHPUnit test library from the GitHub mirror. develop.svn.wordpress.org
 		# is frequently unreachable from CI runners (SSL/connection errors), so we avoid
-		# svn entirely. Try the matching tag, then the exact branch, the major.minor
-		# branch, and finally trunk.
-		local TMP_WPD
-		TMP_WPD="$(mktemp -d)"
-		local got=""
-		for url in \
-			"https://github.com/WordPress/wordpress-develop/archive/refs/tags/${WPD_REF}.tar.gz" \
-			"https://github.com/WordPress/wordpress-develop/archive/refs/heads/${WPD_REF}.tar.gz" \
-			"https://github.com/WordPress/wordpress-develop/archive/refs/heads/${WPD_REF%.*}.tar.gz" \
-			"https://github.com/WordPress/wordpress-develop/archive/refs/heads/trunk.tar.gz"; do
-			if download "$url" "$TMP_WPD/wpd.tar.gz" && tar tzf "$TMP_WPD/wpd.tar.gz" >/dev/null 2>&1; then
-				got="$url"
+		# svn entirely. Try the wordpress-develop refs from most to least specific: the
+		# matching tag, the exact branch, its major.minor branch, then trunk.
+		local archive_base='https://github.com/WordPress/wordpress-develop/archive/refs'
+		local candidate_refs="tags/${WPD_REF} heads/${WPD_REF} heads/${WPD_REF%.*} heads/trunk"
+
+		local tmp_wpd downloaded=false
+		tmp_wpd="$(mktemp -d)"
+		for ref in $candidate_refs; do
+			if download "${archive_base}/${ref}.tar.gz" "$tmp_wpd/wpd.tar.gz" \
+				&& tar tzf "$tmp_wpd/wpd.tar.gz" >/dev/null 2>&1; then
+				downloaded=true
 				break
 			fi
 		done
-		if [ -z "$got" ]; then
+		if ! $downloaded; then
 			echo "Could not download the WordPress test library from GitHub." >&2
 			exit 1
 		fi
 
-		mkdir -p "$TMP_WPD/extract"
-		tar --strip-components=1 -xzf "$TMP_WPD/wpd.tar.gz" -C "$TMP_WPD/extract"
-		cp -r "$TMP_WPD/extract/tests/phpunit/includes" "$WP_TESTS_DIR"/includes
-		cp -r "$TMP_WPD/extract/tests/phpunit/data" "$WP_TESTS_DIR"/data
-		cp "$TMP_WPD/extract/wp-tests-config-sample.php" "$WP_TESTS_DIR"/wp-tests-config-sample.php
+		# Copy just the PHPUnit test library out of the extracted source tree.
+		local extracted="$tmp_wpd/extract"
+		mkdir -p "$extracted"
+		tar --strip-components=1 -xzf "$tmp_wpd/wpd.tar.gz" -C "$extracted"
+		cp -r "$extracted/tests/phpunit/includes" "$WP_TESTS_DIR"/includes
+		cp -r "$extracted/tests/phpunit/data" "$WP_TESTS_DIR"/data
+		cp "$extracted/wp-tests-config-sample.php" "$WP_TESTS_DIR"/wp-tests-config-sample.php
 	fi
 
 	if [ ! -f wp-tests-config.php ]; then

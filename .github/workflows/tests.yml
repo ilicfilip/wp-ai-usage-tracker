@@ -29,15 +29,15 @@ jobs:
       mysql:
         image: mysql:8.0
         env:
-          MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
+          MYSQL_ROOT_PASSWORD: root
           MYSQL_DATABASE: wp_ai_rl_tests
         ports:
           - 3306:3306
         options: >-
-          --health-cmd="mysqladmin ping --silent"
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot --silent"
           --health-interval=10s
           --health-timeout=5s
-          --health-retries=5
+          --health-retries=10
 
     steps:
       - name: Checkout code
@@ -57,7 +57,14 @@ jobs:
           custom-cache-suffix: $(date -u "+%Y-%m")
 
       - name: Install the WordPress test suite
-        run: bash bin/install-wp-tests.sh wp_ai_rl_tests root '' 127.0.0.1:3306 latest true
+        run: |
+          # The mysql service already created the DB (MYSQL_DATABASE), so the
+          # final arg skips DB creation. Root has a real password here — passing
+          # a non-empty value also avoids positional-arg shifting.
+          bash bin/install-wp-tests.sh wp_ai_rl_tests root root 127.0.0.1:3306 latest true
+          # Fail loudly here if the test library did not land, instead of letting
+          # the PHPUnit step fail with a confusing "functions.php not found".
+          test -f /tmp/wordpress-tests-lib/includes/functions.php
 
       - name: Run PHPUnit
         env:

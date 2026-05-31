@@ -3,6 +3,46 @@
 Phase 1 (tracking) built 2026-05-29; Phase 2 (limits & enforcement) built 2026-05-30.
 Specs: `WP_AI_Rate_Limiter_Phase1_Spec.md`, `WP_AI_Rate_Limiter_Phase2_Spec.md`.
 
+## ✅ AUTOMATED TEST SUITE + LIVE RE-VERIFICATION (2026-05-31)
+
+Added the project's first automated test coverage and re-verified live capture across
+multiple plugins/users.
+
+**WP integration suite (`WP_UnitTestCase`), 7 classes / 51 tests / 106 assertions — all green:**
+- `bin/install-wp-tests.sh`, `tests/bootstrap.php`, `phpunit.xml.dist`, and a thin
+  `AIUT_TestCase` base. Schema is installed once in the bootstrap (outside the per-test
+  transaction); row isolation comes from the framework's transaction rollback.
+- Covered: `Cost_Calculator` (micros math, prefix-match, option + filter overrides,
+  negative clamp), `Window` (tz-aware day/month keys + half-open ranges, malformed keys,
+  negative-offset zones), `Schema` (3 tables created, UNIQUE counter key, db version,
+  idempotency), `Counter_Store` (atomic upsert accumulation, ordering, unknown/negative
+  deltas), `Limit_Repository` (CRUD, cached hard-flag, wildcard/`off`/disabled filtering),
+  `Limit_Evaluator` (breach + confidence gating + wildcard + per-type usage), `Enforcer`
+  (no-hard-limit short-circuit, breach blocks + fires action, confidence gate, **fail-open
+  on a thrown evaluator**).
+- Tooling: `phpunit/phpunit ^9.6` + `yoast/phpunit-polyfills ^2.0` added to dev deps with a
+  `composer test` script. `tests/` excluded from PHPCS (test files follow PHPUnit's
+  `*-test.php` naming, not WP's `class-*.php`); PHPStan paths already exclude tests.
+- Run locally against DBngin MySQL 8.0.33 + WP trunk (7.0-alpha) test library:
+  `composer test` (needs `WP_TESTS_DIR=/tmp/wordpress-tests-lib`; install via
+  `bin/install-wp-tests.sh wp_ai_rl_tests root <pw> 127.0.0.1:3306 trunk`).
+
+**One real bug surfaced by the suite — `Limit_Repository::save()` returned id `0` on
+insert.** It called `refresh_hard_flag()` (which runs its own `COUNT(*)` query) *before*
+reading `$wpdb->insert_id`; any query resets `insert_id` to 0, so every create returned 0.
+The row was still written, so the dashboard (which refetches the list) masked it — but the
+REST create endpoint's returned id and the post-insert flow were wrong. Fixed by capturing
+`$wpdb->insert_id` immediately after the insert, before `refresh_hard_flag()`. This single
+bug accounted for all 5 initial failures (the four `find($id)`-on-`0` errors and the
+delete-by-id-`0` flag-refresh assertion).
+
+**Live multi-plugin / multi-user re-verification** on `<wordpress-root>` (WP 7.0, AI client in
+core, `ai-provider-for-anthropic` active). Two tiny `'hi'` prompts:
+- `aiut-test-A` as user 1/administrator and `aiut-test-B` as user 2/editor → two events,
+  each `confidence = high`, `provider = anthropic`, `model = claude-opus-4-8`, real input +
+  output tokens, `estimated = 0`. Counters fanned correctly into plugin/user/role buckets.
+  This closes the spec §9 "2+ plugins under 2+ users" item. Test user + data cleaned up.
+
 ## ✅ PHASE 2 COMPLETE — limits & enforcement (2026-05-30)
 
 Built and verified end-to-end on the `<wordpress-root>` WP 7.0 install. The plugin can now

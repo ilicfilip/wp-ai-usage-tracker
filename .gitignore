@@ -16,3 +16,6 @@
 # OS / editor
 .DS_Store
 *.log
+
+# Claude Code session state
+.claude/

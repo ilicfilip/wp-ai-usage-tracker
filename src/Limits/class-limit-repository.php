@@ -142,8 +142,14 @@ class Limit_Repository {
 			return false;
 		}
 
+		// Capture the new id BEFORE refresh_hard_flag() runs its own query — any
+		// further query resets $wpdb->insert_id to 0, which would make save()
+		// (and callers like the REST create endpoint) report id 0.
+		$new_id = (int) $wpdb->insert_id;
+
 		$this->refresh_hard_flag();
-		return (int) $wpdb->insert_id;
+
+		return $new_id;
 	}
 
 	/**

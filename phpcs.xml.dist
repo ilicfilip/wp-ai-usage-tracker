@@ -15,6 +15,15 @@
 	<!-- Exclude the built assets directory. -->
 	<exclude-pattern>*/build/*</exclude-pattern>
 
+	<!--
+	Exclude the PHPUnit test suite. Test files intentionally diverge from the
+	plugin's production conventions: PHPUnit discovers test classes by the
+	*-test.php filename pattern (not WordPress's class-*.php), and concise test
+	docblocks are by design. Tests are still linted (php -l) and type-checked at
+	their own level via the suite run.
+	-->
+	<exclude-pattern>*/tests/*</exclude-pattern>
+
 	<!-- Exclude Javascript & CSS files. -->
 	<exclude-pattern>*.js</exclude-pattern>
 	<exclude-pattern>*.css</exclude-pattern>

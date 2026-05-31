@@ -25,7 +25,7 @@ WP_CORE_DIR=${WP_CORE_DIR-$TMPDIR/wordpress/}
 
 download() {
 	if [ "$(which curl)" ]; then
-		curl -s "$1" >"$2"
+		curl -fsSL "$1" >"$2"
 	elif [ "$(which wget)" ]; then
 		wget -nv -O "$2" "$1"
 	else
@@ -101,15 +101,45 @@ install_test_suite() {
 		local ioption='-i'
 	fi
 
-	if [ ! -d "$WP_TESTS_DIR" ]; then
+	# Map the SVN-style tag to a wordpress-develop git ref.
+	local WPD_REF="${WP_TESTS_TAG#tags/}"
+	WPD_REF="${WPD_REF#branches/}"
+
+	if [ ! -d "$WP_TESTS_DIR"/includes ]; then
 		mkdir -p "$WP_TESTS_DIR"
 		rm -rf "$WP_TESTS_DIR"/{includes,data}
-		svn export --quiet --ignore-externals https://develop.svn.wordpress.org/"${WP_TESTS_TAG}"/tests/phpunit/includes/ "$WP_TESTS_DIR"/includes
-		svn export --quiet --ignore-externals https://develop.svn.wordpress.org/"${WP_TESTS_TAG}"/tests/phpunit/data/ "$WP_TESTS_DIR"/data
+
+		# Fetch the PHPUnit test library from the GitHub mirror. develop.svn.wordpress.org
+		# is frequently unreachable from CI runners (SSL/connection errors), so we avoid
+		# svn entirely. Try the matching tag, then the exact branch, the major.minor
+		# branch, and finally trunk.
+		local TMP_WPD
+		TMP_WPD="$(mktemp -d)"
+		local got=""
+		for url in \
+			"https://github.com/WordPress/wordpress-develop/archive/refs/tags/${WPD_REF}.tar.gz" \
+			"https://github.com/WordPress/wordpress-develop/archive/refs/heads/${WPD_REF}.tar.gz" \
+			"https://github.com/WordPress/wordpress-develop/archive/refs/heads/${WPD_REF%.*}.tar.gz" \
+			"https://github.com/WordPress/wordpress-develop/archive/refs/heads/trunk.tar.gz"; do
+			if download "$url" "$TMP_WPD/wpd.tar.gz" && tar tzf "$TMP_WPD/wpd.tar.gz" >/dev/null 2>&1; then
+				got="$url"
+				break
+			fi
+		done
+		if [ -z "$got" ]; then
+			echo "Could not download the WordPress test library from GitHub." >&2
+			exit 1
+		fi
+
+		mkdir -p "$TMP_WPD/extract"
+		tar --strip-components=1 -xzf "$TMP_WPD/wpd.tar.gz" -C "$TMP_WPD/extract"
+		cp -r "$TMP_WPD/extract/tests/phpunit/includes" "$WP_TESTS_DIR"/includes
+		cp -r "$TMP_WPD/extract/tests/phpunit/data" "$WP_TESTS_DIR"/data
+		cp "$TMP_WPD/extract/wp-tests-config-sample.php" "$WP_TESTS_DIR"/wp-tests-config-sample.php
 	fi
 
 	if [ ! -f wp-tests-config.php ]; then
-		download https://develop.svn.wordpress.org/"${WP_TESTS_TAG}"/wp-tests-config-sample.php "$WP_TESTS_DIR"/wp-tests-config.php
+		cp "$WP_TESTS_DIR"/wp-tests-config-sample.php "$WP_TESTS_DIR"/wp-tests-config.php
 		# Remove all forward slashes in the end.
 		WP_CORE_DIR=$(echo "$WP_CORE_DIR" | sed "s:/\+$::")
 		sed $ioption "s:dirname( __FILE__ ) . '/src/':'$WP_CORE_DIR/':" "$WP_TESTS_DIR"/wp-tests-config.php

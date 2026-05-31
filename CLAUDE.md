@@ -220,7 +220,7 @@ enqueue in `class-settings-page.php` must reference that exact name.
 ### Live testing
 
 There is a real WP 7.0 Valet install at `<wordpress-root>` (URL `http://your-site.test`, admin
-<redacted-credentials>) with the Anthropic provider configured. The plugin is symlinked into
+an admin account) with the Anthropic provider configured. The plugin is symlinked into
 its `wp-content/plugins/`. To test real capture, activate a small caller plugin that runs
 `do_action('wp_ai_rate_limiter_attribute','slug'); wp_ai_client_prompt('hi')->generate_text();`
 then check Tools → AI Usage. **Real AI calls cost money — keep prompts minimal and few.**

@@ -19,3 +19,6 @@
 
 # Claude Code session state
 .claude/
+
+# Internal dev-progress log (kept local, not published)
+BUILD_STATUS.md

@@ -197,7 +197,7 @@ actually fire.
   `<plugin-root>` are live immediately; no copy step.
   (`build/` must still be rebuilt for UI changes.)
 - **URL:** http://your-site.test
-- **Admin:** <redacted-credentials>
+- **Admin:** an admin account
 - **AI provider:** Anthropic is configured, so real `generate_text()` calls work.
 
 > The plugin only boots when `wp_ai_client_prompt()` exists (core 7.0 AI Client).

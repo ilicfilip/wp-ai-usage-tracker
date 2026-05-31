@@ -141,14 +141,17 @@ install_test_suite() {
 
 	if [ ! -f wp-tests-config.php ]; then
 		cp "$WP_TESTS_DIR"/wp-tests-config-sample.php "$WP_TESTS_DIR"/wp-tests-config.php
-		# Remove all forward slashes in the end.
+		# Point the sample config at our WP core dir + DB credentials in a single
+		# rewrite (trailing slashes trimmed from the core dir first).
 		WP_CORE_DIR=$(echo "$WP_CORE_DIR" | sed "s:/\+$::")
-		sed $ioption "s:dirname( __FILE__ ) . '/src/':'$WP_CORE_DIR/':" "$WP_TESTS_DIR"/wp-tests-config.php
-		sed $ioption "s:__DIR__ . '/src/':'$WP_CORE_DIR/':" "$WP_TESTS_DIR"/wp-tests-config.php
-		sed $ioption "s/youremptytestdbnamehere/$DB_NAME/" "$WP_TESTS_DIR"/wp-tests-config.php
-		sed $ioption "s/yourusernamehere/$DB_USER/" "$WP_TESTS_DIR"/wp-tests-config.php
-		sed $ioption "s/yourpasswordhere/$DB_PASS/" "$WP_TESTS_DIR"/wp-tests-config.php
-		sed $ioption "s|localhost|${DB_HOST}|" "$WP_TESTS_DIR"/wp-tests-config.php
+		sed $ioption \
+			-e "s:dirname( __FILE__ ) . '/src/':'$WP_CORE_DIR/':" \
+			-e "s:__DIR__ . '/src/':'$WP_CORE_DIR/':" \
+			-e "s/youremptytestdbnamehere/$DB_NAME/" \
+			-e "s/yourusernamehere/$DB_USER/" \
+			-e "s/yourpasswordhere/$DB_PASS/" \
+			-e "s|localhost|${DB_HOST}|" \
+			"$WP_TESTS_DIR"/wp-tests-config.php
 	fi
 }
 

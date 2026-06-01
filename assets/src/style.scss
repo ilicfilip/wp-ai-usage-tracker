@@ -11,6 +11,12 @@
 
 	&-toolbar {
 		margin-bottom: 16px;
+
+		// Keep the period switcher labels ("This month" / "Today") on a single
+		// line; the equal-width isBlock options otherwise wrap "This month".
+		.components-toggle-group-control-option-base {
+			white-space: nowrap;
+		}
 	}
 
 	&-loading {

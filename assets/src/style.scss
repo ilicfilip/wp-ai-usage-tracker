@@ -259,7 +259,12 @@
 	&-empty {
 		max-width: 720px;
 
-		/* Separate the empty-state card from the Limits panel below it. */
+		/*
+		 * Match the gap above and below the card. The toolbar above already
+		 * contributes 16px; adding 16px here brings the top gap to 32px so it
+		 * mirrors the 32px that separates the card from the Limits panel below.
+		 */
+		margin-top: 16px;
 		margin-bottom: 32px;
 
 		h2 {

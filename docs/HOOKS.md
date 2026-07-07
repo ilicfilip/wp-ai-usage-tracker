@@ -28,6 +28,7 @@ update this file in the same change.
 | [`wp_aiut_alert_email`](#wp_aiut_alert_email) | filter | `Alerts\Notifier` | Override the alert email recipient. |
 | [`wp_aiut_capability`](#wp_aiut_capability) | filter | `Admin\Rest_Controller` | Override the capability required for the REST API / dashboard. |
 | [`wp_aiut_chars_per_token`](#wp_aiut_chars_per_token) | filter | `Capture\Result_Capturer` | Override the chars→token divisor for the estimate fallback. |
+| [`wp_aiut_match_max_age`](#wp_aiut_match_max_age) | filter | `Capture\Gatekeeper` | Correlation window (seconds) for matching a result back to a pending intent. |
 | [`wp_aiut_sdk_client`](#wp_aiut_sdk_client) | filter | `Capture\Result_Capturer` | Hand the plugin the SDK client object for transporter decoration. |
 | [`wp_aiut_default_transporter`](#wp_aiut_default_transporter) | filter | `Capture\Chaining_Transporter` | Hand the plugin the SDK default transporter to wrap (Path B). |
 
@@ -393,6 +394,37 @@ the core result event are unaffected — this only touches estimated rows (`esti
 ```php
 add_filter( 'wp_aiut_chars_per_token', function () {
     return 3; // denser tokenisation -> more tokens per char.
+} );
+```
+
+---
+
+### `wp_aiut_match_max_age`
+
+Filters the **correlation window** (in seconds) used when matching a completed request's
+token usage back to a pending pre‑request intent. Because the result event carries no
+builder identity, matching is by recency (`Gatekeeper::match_pending()`); an intent older
+than this window is ignored — an abandoned or errored call that never produced a result ages
+out and is swept by the estimate pass instead of stealing a later, unrelated result.
+
+- **Type:** filter.
+- **Applied in:** `src/Capture/class-gatekeeper.php`, inside `Gatekeeper::match_max_age()`
+  (called from `match_pending()`).
+- **Signature:**
+
+  ```php
+  $seconds = apply_filters( 'wp_aiut_match_max_age', float $seconds );
+  ```
+
+  | Param | Type | Description |
+  | --- | --- | --- |
+  | `$seconds` | `float` | Default `300.0` (`Gatekeeper::MATCH_MAX_AGE_SECONDS`). A value `<= 0` is ignored (the default is kept). |
+
+**Example — widen for an unusually slow provider:**
+
+```php
+add_filter( 'wp_aiut_match_max_age', function () {
+    return 600.0; // allow up to 10 minutes between intent and result.
 } );
 ```
 

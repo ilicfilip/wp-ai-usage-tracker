@@ -88,6 +88,16 @@ gracefully rather than fatalling. The file passes `php -l` with the SDK entirely
   (`Gatekeeper::match_pending()`). This is correct for the overwhelmingly common
   one-call-per-request shape; concurrent interleaved calls within a single PHP request
   could mis-pair. Acceptable for now; revisit if real data shows interleaving.
+- **Stale-intent hardening.** Because matching is by recency, an intent that never
+  receives its result would otherwise linger as the "newest un-finalised" match and steal
+  the *next* genuine result — a permanent off-by-one for the rest of the request. Two
+  guards close this: (1) a **blocked** prompt (prior filter or a hard-limit block) discards
+  its intent immediately in `observe_prompt()` — no request runs, so no result will arrive;
+  (2) `match_pending()` ignores intents older than a correlation window
+  (`Gatekeeper::MATCH_MAX_AGE_SECONDS`, default 300s, filter `wp_aiut_match_max_age`), so an
+  abandoned/errored intent ages out and is left for the shutdown estimate sweep rather than
+  mis-pairing a later real result. **Don't regress to:** matching un-finalised intents of
+  unbounded age, or leaving a blocked call's intent live.
 - The other three paths still exist as **fallbacks only**, in priority order: Path A the
   optional `wpai_request_log_context` filter (AI logging plugin, usually absent), Path B
   the chaining transporter decorator (`Chaining_Transporter`, chains via
@@ -278,11 +288,12 @@ and the table prefix helper originally double-appended an underscore.
 
 **Consequences.**
 - `uninstall.php` rebuilds the names inline as `$wpdb->prefix . 'aiut_events'` /
-  `'aiut_counters'` to mirror the helper (it can't call the helper — uninstall runs in a
-  bare context). **Note:** uninstall currently drops only `events` and `counters`, not the
-  Phase 2 `limits` table, and deletes options `aiut_db_version`, `aiut_delete_on_uninstall`,
-  `aiut_pricing`, `aiut_settings` (not `aiut_has_hard_limits`). If a fully-clean uninstall
-  matters, add `{prefix}aiut_limits` and the hard-flag option there.
+  `'aiut_counters'` / `'aiut_limits'` to mirror the helper (it can't call the helper —
+  uninstall runs in a bare context). It drops all three tables and deletes every option the
+  plugin writes: `aiut_db_version`, `aiut_delete_on_uninstall`, `aiut_pricing`,
+  `aiut_settings`, and `aiut_has_hard_limits` (the autoloaded hard-limit fast-path flag).
+  **Keep this list in sync** when you add a table or a persisted option — a fully opted-in
+  uninstall must leave nothing behind.
 - Schema is versioned (`Schema::DB_VERSION = '2'`, option `aiut_db_version`); `install()`
   is idempotent via `dbDelta()`. Bump `DB_VERSION` when columns change.
 

@@ -68,6 +68,22 @@ class Gatekeeper {
 	private static $sequence = 0;
 
 	/**
+	 * Maximum age, in seconds, of a pending intent still eligible to be matched
+	 * to an incoming result.
+	 *
+	 * The intent→result correlation is by recency (the result event does not
+	 * echo the builder identity), so a stale intent that never received its
+	 * result — e.g. a prompt that errored or was blocked after the intent was
+	 * recorded — must not linger as the "newest un-finalised" match forever and
+	 * mis-pair the *next* real result. Any intent older than this is ignored by
+	 * match_pending() and swept by the estimate pass instead. Generous relative
+	 * to a typical multi-second AI request; filterable for slow providers.
+	 *
+	 * @var float
+	 */
+	const MATCH_MAX_AGE_SECONDS = 300.0;
+
+	/**
 	 * Constructor: wire collaborators, guarding optional ones.
 	 *
 	 * @param Caller_Resolver|null $resolver        Optional resolver (created if null).
@@ -126,8 +142,9 @@ class Gatekeeper {
 	 * @return bool True to block, otherwise the incoming $prevent.
 	 */
 	public function observe_prompt( $prevent, $builder = null ) {
-		$caller = null;
-		$user   = null;
+		$caller      = null;
+		$user        = null;
+		$fingerprint = null;
 
 		try {
 			$caller = $this->resolver->resolve();
@@ -152,7 +169,13 @@ class Gatekeeper {
 		}
 
 		// If a prior filter already blocks, or we couldn't resolve, respect that.
+		// A prior block means no request runs, so no result will arrive for this
+		// intent — discard it so it cannot mis-pair with a later real result.
 		if ( $prevent || null === $caller || null === $user ) {
+			if ( $prevent && null !== $fingerprint ) {
+				$this->mark_finalized( $fingerprint );
+			}
+
 			return $prevent;
 		}
 
@@ -162,6 +185,14 @@ class Gatekeeper {
 			$scopes = $this->build_scopes( $caller, $user );
 
 			if ( $this->enforcer->should_block( $scopes, $caller['confidence'] ) ) {
+				// We are blocking: the AI call will not run, so no result event
+				// will ever finalise this intent. Discard it now so it does not
+				// remain the "newest un-finalised" intent and steal the next
+				// genuine result (which would corrupt attribution/accounting).
+				if ( null !== $fingerprint ) {
+					$this->mark_finalized( $fingerprint );
+				}
+
 				return true;
 			}
 		}
@@ -273,12 +304,19 @@ class Gatekeeper {
 	 * it passes the slug to narrow the match; otherwise the newest pending
 	 * intent overall is returned (Architecture §3 fallback correlation).
 	 *
+	 * Intents older than the max-age window are ignored: because matching is by
+	 * recency (the result event carries no builder identity), a stale intent that
+	 * never received its result — an errored or otherwise abandoned call — must
+	 * not survive to steal a later, unrelated result. Aged-out intents are left
+	 * for the shutdown estimate sweep instead.
+	 *
 	 * @param string|null $slug Optional caller slug to prefer.
 	 * @return array<string,mixed>|null The matched intent, or null.
 	 */
 	public function match_pending( $slug = null ) {
 		$best     = null;
 		$best_key = null;
+		$min_age  = microtime( true ) - $this->match_max_age();
 
 		foreach ( self::$pending as $key => $intent ) {
 			if ( ! empty( $intent['finalized'] ) ) {
@@ -286,6 +324,11 @@ class Gatekeeper {
 			}
 
 			if ( null !== $slug && $intent['source_slug'] !== $slug ) {
+				continue;
+			}
+
+			// Skip intents that have aged out of the correlation window.
+			if ( isset( $intent['created_at'] ) && $intent['created_at'] < $min_age ) {
 				continue;
 			}
 
@@ -301,6 +344,24 @@ class Gatekeeper {
 
 		$best['_key'] = $best_key;
 		return $best;
+	}
+
+	/**
+	 * The intent→result correlation window, in seconds (filterable).
+	 *
+	 * @return float Maximum age of a matchable pending intent.
+	 */
+	private function match_max_age() {
+		/**
+		 * Filter the maximum age (seconds) of a pending intent still eligible to
+		 * be matched to an incoming AI result. Raise it for unusually slow
+		 * providers; lower it to tighten correlation on busy sites.
+		 *
+		 * @param float $seconds Default self::MATCH_MAX_AGE_SECONDS.
+		 */
+		$age = (float) apply_filters( 'wp_aiut_match_max_age', self::MATCH_MAX_AGE_SECONDS );
+
+		return $age > 0 ? $age : self::MATCH_MAX_AGE_SECONDS;
 	}
 
 	/**

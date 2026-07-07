@@ -11,86 +11,12 @@
  */
 
 use WP_AIUT\Capture\Gatekeeper;
-use WP_AIUT\Attribution\Caller_Resolver;
-use WP_AIUT\Enforcement\Enforcer;
-
-/**
- * Resolver stub: deterministic attribution, no hooks, no backtrace.
- */
-class AIUT_Stub_Resolver extends Caller_Resolver {
-
-	/**
-	 * Slug this stub attributes every call to.
-	 *
-	 * @var string
-	 */
-	private $slug;
-
-	/**
-	 * @param string $slug Slug to report from resolve().
-	 */
-	public function __construct( $slug = 'acme' ) {
-		$this->slug = $slug;
-	}
-
-	/**
-	 * No-op: the real register() wires self-ID hooks we don't want in a unit test.
-	 */
-	public function register() {}
-
-	/**
-	 * @return array<string,string> Fixed caller attribution.
-	 */
-	public function resolve() {
-		return [
-			'source_slug' => $this->slug,
-			'source_type' => 'plugin',
-			'confidence'  => 'high',
-		];
-	}
-
-	/**
-	 * @return array<string,mixed> Fixed user attribution.
-	 */
-	public function resolve_user() {
-		return [
-			'user_id'   => 1,
-			'user_role' => 'administrator',
-		];
-	}
-}
-
-/**
- * Enforcer stub returning a fixed block decision without touching the DB.
- */
-class AIUT_Stub_Enforcer extends Enforcer {
-
-	/**
-	 * Whether should_block() returns true.
-	 *
-	 * @var bool
-	 */
-	private $block;
-
-	/**
-	 * @param bool $block Fixed decision.
-	 */
-	public function __construct( $block ) {
-		$this->block = (bool) $block;
-	}
-
-	/**
-	 * @param array<string,string> $scopes     Unused.
-	 * @param string               $confidence Unused.
-	 * @return bool The fixed decision.
-	 */
-	public function should_block( array $scopes, $confidence ) {
-		return $this->block;
-	}
-}
 
 /**
  * @group capture
+ *
+ * The AIUT_Stub_Resolver / AIUT_Stub_Enforcer doubles live in
+ * tests/class-aiut-test-doubles.php (loaded by the bootstrap).
  */
 class Gatekeeper_Test extends AIUT_TestCase {
 

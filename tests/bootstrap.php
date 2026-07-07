@@ -51,3 +51,7 @@ require "{$_tests_dir}/includes/bootstrap.php";
 
 // Shared abstract base test case (not auto-collected: no -test.php suffix).
 require __DIR__ . '/class-aiut-testcase.php';
+
+// Shared test doubles, loaded here so their availability does not depend on the
+// order PHPUnit happens to load the individual *-test.php files in.
+require __DIR__ . '/class-aiut-test-doubles.php';

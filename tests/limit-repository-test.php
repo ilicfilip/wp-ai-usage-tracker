@@ -2,13 +2,13 @@
 /**
  * Tests for the Limit_Repository CRUD + cached hard-limit fast-path.
  *
- * @package WP_AI_Rate_Limiter
+ * @package WP_AIUT
  */
 
-use WP_AI_Rate_Limiter\Limits\Limit_Repository;
+use WP_AIUT\Limits\Limit_Repository;
 
 /**
- * @covers \WP_AI_Rate_Limiter\Limits\Limit_Repository
+ * @covers \WP_AIUT\Limits\Limit_Repository
  */
 class Limit_Repository_Test extends AIUT_TestCase {
 

@@ -1,5 +1,5 @@
 {
-	"name": "ilicfilip/wp-ai-rate-limiter",
+	"name": "ilicfilip/wp-aiut",
 	"description": "AI Usage Tracker — tracks WordPress 7.0 AI Client usage per plugin and per user.",
 	"type": "wordpress-plugin",
 	"license": "GPL-2.0-or-later",

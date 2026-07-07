@@ -2,10 +2,10 @@
 /**
  * Cost calculator: tokens to estimated cost in integer micros.
  *
- * @package WP_AI_Rate_Limiter
+ * @package WP_AIUT
  */
 
-namespace WP_AI_Rate_Limiter\Accounting;
+namespace WP_AIUT\Accounting;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -16,7 +16,7 @@ defined( 'ABSPATH' ) || exit;
  * Pricing is a table of per-1,000,000-token prices (in USD) keyed by
  * "provider/model". It ships with sane 2026 placeholder defaults, is persisted
  * in the 'aiut_pricing' option (overridable by the admin), and is filterable
- * via 'wp_ai_rate_limiter_pricing'. Never hardcode prices on the hot path —
+ * via 'wp_aiut_pricing'. Never hardcode prices on the hot path —
  * providers change them.
  */
 class Cost_Calculator {
@@ -29,7 +29,7 @@ class Cost_Calculator {
 	/**
 	 * Filter applied to the resolved pricing table before use.
 	 */
-	const PRICING_FILTER = 'wp_ai_rate_limiter_pricing';
+	const PRICING_FILTER = 'wp_aiut_pricing';
 
 	/**
 	 * Default pricing table: per 1,000,000 tokens, in USD.
@@ -40,7 +40,7 @@ class Cost_Calculator {
 	 * IMPORTANT: these are ESTIMATES, not verified live prices. Provider pricing
 	 * changes over time and varies by tier/region; the dashboard labels figures
 	 * as "estimated" for this reason. The admin can override any row in Settings
-	 * (stored in the 'aiut_pricing' option) or via the 'wp_ai_rate_limiter_pricing'
+	 * (stored in the 'aiut_pricing' option) or via the 'wp_aiut_pricing'
 	 * filter. Model keys use the base family slug (e.g. "claude-opus-4"); the
 	 * lookup in rates_for() prefix-matches versioned slugs ("claude-opus-4-8") to
 	 * the closest family entry, so new minor versions resolve without edits.
@@ -106,7 +106,7 @@ class Cost_Calculator {
 	 * Resolve the active pricing table.
 	 *
 	 * Merges shipped defaults with any admin overrides stored in the option, then
-	 * applies the 'wp_ai_rate_limiter_pricing' filter. Defaults guarantee the
+	 * applies the 'wp_aiut_pricing' filter. Defaults guarantee the
 	 * generic '__default__/__default__' fallback always exists.
 	 *
 	 * @return array<string, array<string, float>>

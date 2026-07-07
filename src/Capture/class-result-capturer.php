@@ -2,10 +2,10 @@
 /**
  * Result capturer — turns completed AI requests into finalised usage rows.
  *
- * @package WP_AI_Rate_Limiter
+ * @package WP_AIUT
  */
 
-namespace WP_AI_Rate_Limiter\Capture;
+namespace WP_AIUT\Capture;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -356,9 +356,9 @@ class Result_Capturer {
 			'estimated'         => $estimated ? 1 : 0,
 		];
 
-		if ( class_exists( '\\WP_AI_Rate_Limiter\\Accounting\\Usage_Recorder' )
-			&& method_exists( '\\WP_AI_Rate_Limiter\\Accounting\\Usage_Recorder', 'record' ) ) {
-			\WP_AI_Rate_Limiter\Accounting\Usage_Recorder::record( $row );
+		if ( class_exists( '\\WP_AIUT\\Accounting\\Usage_Recorder' )
+			&& method_exists( '\\WP_AIUT\\Accounting\\Usage_Recorder', 'record' ) ) {
+			\WP_AIUT\Accounting\Usage_Recorder::record( $row );
 		}
 	}
 
@@ -378,7 +378,7 @@ class Result_Capturer {
 		 *
 		 * @param int $divisor Characters per token (default 4).
 		 */
-		$divisor = (int) apply_filters( 'wp_ai_rate_limiter_chars_per_token', self::CHARS_PER_TOKEN );
+		$divisor = (int) apply_filters( 'wp_aiut_chars_per_token', self::CHARS_PER_TOKEN );
 
 		if ( $divisor > 0 && self::CHARS_PER_TOKEN !== $divisor ) {
 			$input = (int) floor( $chars / $divisor );
@@ -584,7 +584,7 @@ class Result_Capturer {
 		 *
 		 * @param object|null $client Discovered client, or null.
 		 */
-		$filtered = apply_filters( 'wp_ai_rate_limiter_sdk_client', null );
+		$filtered = apply_filters( 'wp_aiut_sdk_client', null );
 
 		if ( is_object( $filtered ) && method_exists( $filtered, 'setHttpTransporter' ) ) {
 			return $filtered;

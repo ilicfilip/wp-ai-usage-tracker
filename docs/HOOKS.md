@@ -1,6 +1,6 @@
 # Hooks & REST API Reference
 
-The complete public extension surface of **AI Usage Tracker** (`wp-ai-rate-limiter`):
+The complete public extension surface of **AI Usage Tracker** (`wp-aiut`):
 every action/filter the plugin **fires** (for you to hook), every core/3rd‑party hook it
 **consumes**, and the REST API.
 
@@ -8,9 +8,9 @@ This file is generated from — and verified against — the source. Every hook 
 signature, priority, and arg count below was read out of `src/`. If you change a hook,
 update this file in the same change.
 
-> **Naming.** All plugin‑provided hooks are prefixed `wp_ai_rate_limiter_`. The
+> **Naming.** All plugin‑provided hooks are prefixed `wp_aiut_`. The
 > attribution self‑ID action is the one most integrators care about — see
-> [`wp_ai_rate_limiter_attribute`](#wp_ai_rate_limiter_attribute) first.
+> [`wp_aiut_attribute`](#wp_aiut_attribute) first.
 
 ---
 
@@ -20,16 +20,16 @@ update this file in the same change.
 
 | Hook | Type | Fired in | Purpose |
 | --- | --- | --- | --- |
-| [`wp_ai_rate_limiter_attribute`](#wp_ai_rate_limiter_attribute) | action *(you fire it, plugin listens)* | `Attribution\Caller_Resolver` | Self‑identify your plugin before a prompt (the good‑citizen integration point). |
-| [`wp_ai_rate_limiter_usage_recorded`](#wp_ai_rate_limiter_usage_recorded) | action | `Accounting\Usage_Recorder` | After an event is written + counters fanned out. |
-| [`wp_ai_rate_limiter_blocked`](#wp_ai_rate_limiter_blocked) | action | `Enforcement\Enforcer` | A hard limit is about to block a prompt. |
-| [`wp_ai_rate_limiter_notify`](#wp_ai_rate_limiter_notify) | action | `Alerts\Notifier` | A limit crossed an 80%/100% alert threshold (custom alert channel). |
-| [`wp_ai_rate_limiter_pricing`](#wp_ai_rate_limiter_pricing) | filter | `Accounting\Cost_Calculator` | Override the active pricing table. |
-| [`wp_ai_rate_limiter_alert_email`](#wp_ai_rate_limiter_alert_email) | filter | `Alerts\Notifier` | Override the alert email recipient. |
-| [`wp_ai_rate_limiter_capability`](#wp_ai_rate_limiter_capability) | filter | `Admin\Rest_Controller` | Override the capability required for the REST API / dashboard. |
-| [`wp_ai_rate_limiter_chars_per_token`](#wp_ai_rate_limiter_chars_per_token) | filter | `Capture\Result_Capturer` | Override the chars→token divisor for the estimate fallback. |
-| [`wp_ai_rate_limiter_sdk_client`](#wp_ai_rate_limiter_sdk_client) | filter | `Capture\Result_Capturer` | Hand the plugin the SDK client object for transporter decoration. |
-| [`wp_ai_rate_limiter_default_transporter`](#wp_ai_rate_limiter_default_transporter) | filter | `Capture\Chaining_Transporter` | Hand the plugin the SDK default transporter to wrap (Path B). |
+| [`wp_aiut_attribute`](#wp_aiut_attribute) | action *(you fire it, plugin listens)* | `Attribution\Caller_Resolver` | Self‑identify your plugin before a prompt (the good‑citizen integration point). |
+| [`wp_aiut_usage_recorded`](#wp_aiut_usage_recorded) | action | `Accounting\Usage_Recorder` | After an event is written + counters fanned out. |
+| [`wp_aiut_blocked`](#wp_aiut_blocked) | action | `Enforcement\Enforcer` | A hard limit is about to block a prompt. |
+| [`wp_aiut_notify`](#wp_aiut_notify) | action | `Alerts\Notifier` | A limit crossed an 80%/100% alert threshold (custom alert channel). |
+| [`wp_aiut_pricing`](#wp_aiut_pricing) | filter | `Accounting\Cost_Calculator` | Override the active pricing table. |
+| [`wp_aiut_alert_email`](#wp_aiut_alert_email) | filter | `Alerts\Notifier` | Override the alert email recipient. |
+| [`wp_aiut_capability`](#wp_aiut_capability) | filter | `Admin\Rest_Controller` | Override the capability required for the REST API / dashboard. |
+| [`wp_aiut_chars_per_token`](#wp_aiut_chars_per_token) | filter | `Capture\Result_Capturer` | Override the chars→token divisor for the estimate fallback. |
+| [`wp_aiut_sdk_client`](#wp_aiut_sdk_client) | filter | `Capture\Result_Capturer` | Hand the plugin the SDK client object for transporter decoration. |
+| [`wp_aiut_default_transporter`](#wp_aiut_default_transporter) | filter | `Capture\Chaining_Transporter` | Hand the plugin the SDK default transporter to wrap (Path B). |
 
 ### Core / SDK hooks the plugin consumes
 
@@ -43,7 +43,7 @@ update this file in the same change.
 
 ## Hooks the plugin fires
 
-### `wp_ai_rate_limiter_attribute`
+### `wp_aiut_attribute`
 
 > **The good‑citizen integration point.** If your plugin makes AI Client calls, fire
 > this immediately before each prompt so usage is attributed to you with **`high`**
@@ -53,11 +53,11 @@ update this file in the same change.
 - **Type:** action — *you* call `do_action()`; the plugin's `Caller_Resolver` listens.
 - **Listener registered in:** `src/Attribution/class-caller-resolver.php`
   (`Caller_Resolver::register()` → `add_action( self::ATTRIBUTE_ACTION, [...], 10, 1 )`,
-  where `ATTRIBUTE_ACTION = 'wp_ai_rate_limiter_attribute'`).
+  where `ATTRIBUTE_ACTION = 'wp_aiut_attribute'`).
 - **Signature:**
 
   ```php
-  do_action( 'wp_ai_rate_limiter_attribute', string $slug );
+  do_action( 'wp_aiut_attribute', string $slug );
   ```
 
   | Param | Type | Description |
@@ -80,7 +80,7 @@ the next prompt, the Gatekeeper reads the **top** of that stack
 
 ```php
 // Right before your AI Client call, self-identify.
-do_action( 'wp_ai_rate_limiter_attribute', 'my-cool-plugin' );
+do_action( 'wp_aiut_attribute', 'my-cool-plugin' );
 
 $text = wp_ai_client_prompt( 'Summarise this post in one sentence.' )
     ->generate_text();
@@ -94,7 +94,7 @@ $text = wp_ai_client_prompt( 'Summarise this post in one sentence.' )
  */
 function mycoolplugin_ai_text( string $prompt ) {
     if ( function_exists( 'wp_ai_client_prompt' ) ) {
-        do_action( 'wp_ai_rate_limiter_attribute', 'my-cool-plugin' );
+        do_action( 'wp_aiut_attribute', 'my-cool-plugin' );
         return wp_ai_client_prompt( $prompt )->generate_text();
     }
     return new WP_Error( 'ai_unavailable', 'AI Client not available.' );
@@ -106,7 +106,7 @@ nobody listens to is a no‑op. There is no hard dependency in either direction.
 
 ---
 
-### `wp_ai_rate_limiter_usage_recorded`
+### `wp_aiut_usage_recorded`
 
 Fires once after a usage event row has been written to `{prefix}aiut_events` **and** the
 per‑scope counters have been incremented in `{prefix}aiut_counters`. This is the canonical
@@ -121,7 +121,7 @@ detect 80%/100% limit crossings.
 - **Signature:**
 
   ```php
-  do_action( 'wp_ai_rate_limiter_usage_recorded', array $data, array $scopes );
+  do_action( 'wp_aiut_usage_recorded', array $data, array $scopes );
   ```
 
   | Param | Type | Description |
@@ -133,7 +133,7 @@ detect 80%/100% limit crossings.
 
 ```php
 add_action(
-    'wp_ai_rate_limiter_usage_recorded',
+    'wp_aiut_usage_recorded',
     function ( array $data, array $scopes ) {
         error_log( sprintf(
             'AI usage: %s spent %d in + %d out tokens (estimated=%d)',
@@ -150,7 +150,7 @@ add_action(
 
 ---
 
-### `wp_ai_rate_limiter_blocked`
+### `wp_aiut_blocked`
 
 Fires the moment the Enforcer decides a prompt must be blocked because an enabled, breached,
 confidence‑satisfied **hard** limit was found — *immediately before* the Gatekeeper returns
@@ -164,7 +164,7 @@ message than core's generic "prevented by a filter" error.
 - **Signature:**
 
   ```php
-  do_action( 'wp_ai_rate_limiter_blocked', array $breach, array $scopes, string $confidence );
+  do_action( 'wp_aiut_blocked', array $breach, array $scopes, string $confidence );
   ```
 
   | Param | Type | Description |
@@ -182,7 +182,7 @@ message than core's generic "prevented by a filter" error.
 
 ```php
 add_action(
-    'wp_ai_rate_limiter_blocked',
+    'wp_aiut_blocked',
     function ( array $breach, array $scopes, string $confidence ) {
         error_log( sprintf(
             'AI prompt blocked: %s limit on %s=%s (%s, confidence=%s)',
@@ -200,7 +200,7 @@ add_action(
 
 ---
 
-### `wp_ai_rate_limiter_notify`
+### `wp_aiut_notify`
 
 Fires when a usage limit crosses an **alert** threshold (80% or 100% of its `threshold`
 this period). It runs **regardless of whether the built‑in admin email is sent** and
@@ -218,7 +218,7 @@ etc.
 - **Signature:**
 
   ```php
-  do_action( 'wp_ai_rate_limiter_notify', array $limit, int $current, int $percent );
+  do_action( 'wp_aiut_notify', array $limit, int $current, int $percent );
   ```
 
   | Param | Type | Description |
@@ -231,7 +231,7 @@ etc.
 
 ```php
 add_action(
-    'wp_ai_rate_limiter_notify',
+    'wp_aiut_notify',
     function ( array $limit, int $current, int $percent ) {
         $value = ( 'cost' === $limit['limit_type'] )
             ? '$' . number_format( $current / 1000000, 2 )
@@ -259,7 +259,7 @@ add_action(
 
 ---
 
-### `wp_ai_rate_limiter_pricing`
+### `wp_aiut_pricing`
 
 Filters the active pricing table (per‑1,000,000‑token prices in **USD**, keyed by
 `"provider/model"`) just before it is used for cost estimation. This is the last word on
@@ -268,11 +268,11 @@ pricing — applied *after* the shipped defaults are merged with the admin‑edi
 
 - **Type:** filter.
 - **Applied in:** `src/Accounting/class-cost-calculator.php`, inside
-  `Cost_Calculator::get_pricing()` (`self::PRICING_FILTER = 'wp_ai_rate_limiter_pricing'`).
+  `Cost_Calculator::get_pricing()` (`self::PRICING_FILTER = 'wp_aiut_pricing'`).
 - **Signature:**
 
   ```php
-  $pricing = apply_filters( 'wp_ai_rate_limiter_pricing', array $pricing );
+  $pricing = apply_filters( 'wp_aiut_pricing', array $pricing );
   ```
 
   | Param | Type | Description |
@@ -290,7 +290,7 @@ keys and minor versions resolve automatically.
 **Example — set your negotiated enterprise rate:**
 
 ```php
-add_filter( 'wp_ai_rate_limiter_pricing', function ( array $pricing ) {
+add_filter( 'wp_aiut_pricing', function ( array $pricing ) {
     // USD per 1,000,000 tokens.
     $pricing['anthropic/claude-opus-4'] = [
         'input'    => 12.0,
@@ -303,18 +303,18 @@ add_filter( 'wp_ai_rate_limiter_pricing', function ( array $pricing ) {
 
 ---
 
-### `wp_ai_rate_limiter_alert_email`
+### `wp_aiut_alert_email`
 
 Filters the recipient address for the built‑in threshold alert email. Return `''` (or any
 non‑email value) to suppress the email entirely while still letting
-[`wp_ai_rate_limiter_notify`](#wp_ai_rate_limiter_notify) fire for custom channels.
+[`wp_aiut_notify`](#wp_aiut_notify) fire for custom channels.
 
 - **Type:** filter.
 - **Applied in:** `src/Alerts/class-notifier.php`, inside `Notifier::recipient()`.
 - **Signature:**
 
   ```php
-  $email = apply_filters( 'wp_ai_rate_limiter_alert_email', string $email );
+  $email = apply_filters( 'wp_aiut_alert_email', string $email );
   ```
 
   | Param | Type | Description |
@@ -324,7 +324,7 @@ non‑email value) to suppress the email entirely while still letting
 **Example — route alerts to a billing distro:**
 
 ```php
-add_filter( 'wp_ai_rate_limiter_alert_email', function () {
+add_filter( 'wp_aiut_alert_email', function () {
     return 'ai-billing@example.com';
 } );
 ```
@@ -332,12 +332,12 @@ add_filter( 'wp_ai_rate_limiter_alert_email', function () {
 **Example — disable the email, rely on Slack only:**
 
 ```php
-add_filter( 'wp_ai_rate_limiter_alert_email', '__return_empty_string' );
+add_filter( 'wp_aiut_alert_email', '__return_empty_string' );
 ```
 
 ---
 
-### `wp_ai_rate_limiter_capability`
+### `wp_aiut_capability`
 
 Filters the capability required to access the dashboard's REST API (and therefore the
 Tools → AI Usage screen's data). Defaults to `manage_options`.
@@ -345,11 +345,11 @@ Tools → AI Usage screen's data). Defaults to `manage_options`.
 - **Type:** filter.
 - **Applied in:** `src/Admin/class-rest-controller.php`, inside
   `Rest_Controller::check_permission()` (the `permission_callback` on **every** route;
-  `CAPABILITY_FILTER = 'wp_ai_rate_limiter_capability'`).
+  `CAPABILITY_FILTER = 'wp_aiut_capability'`).
 - **Signature:**
 
   ```php
-  $capability = apply_filters( 'wp_ai_rate_limiter_capability', string $capability );
+  $capability = apply_filters( 'wp_aiut_capability', string $capability );
   ```
 
   | Param | Type | Description |
@@ -359,7 +359,7 @@ Tools → AI Usage screen's data). Defaults to `manage_options`.
 **Example — let a custom "AI manager" role view usage:**
 
 ```php
-add_filter( 'wp_ai_rate_limiter_capability', function () {
+add_filter( 'wp_aiut_capability', function () {
     return 'view_ai_usage'; // a custom capability you grant.
 } );
 ```
@@ -369,7 +369,7 @@ add_filter( 'wp_ai_rate_limiter_capability', function () {
 
 ---
 
-### `wp_ai_rate_limiter_chars_per_token`
+### `wp_aiut_chars_per_token`
 
 Filters the characters‑per‑token divisor used by the **estimate fallback** (Path C), which
 runs on `shutdown` for any pending intent that never received real tokens. Real captures via
@@ -381,7 +381,7 @@ the core result event are unaffected — this only touches estimated rows (`esti
 - **Signature:**
 
   ```php
-  $divisor = apply_filters( 'wp_ai_rate_limiter_chars_per_token', int $divisor );
+  $divisor = apply_filters( 'wp_aiut_chars_per_token', int $divisor );
   ```
 
   | Param | Type | Description |
@@ -391,14 +391,14 @@ the core result event are unaffected — this only touches estimated rows (`esti
 **Example — tune for a non‑English corpus:**
 
 ```php
-add_filter( 'wp_ai_rate_limiter_chars_per_token', function () {
+add_filter( 'wp_aiut_chars_per_token', function () {
     return 3; // denser tokenisation -> more tokens per char.
 } );
 ```
 
 ---
 
-### `wp_ai_rate_limiter_sdk_client`
+### `wp_aiut_sdk_client`
 
 Filters the SDK **client/registry** object the plugin tries to decorate for Path B
 (transporter‑based capture). Auto‑discovery probes a few known static accessors; this filter
@@ -413,7 +413,7 @@ event, so most sites never need this.
 - **Signature:**
 
   ```php
-  $client = apply_filters( 'wp_ai_rate_limiter_sdk_client', object|null $client );
+  $client = apply_filters( 'wp_aiut_sdk_client', object|null $client );
   ```
 
   | Param | Type | Description |
@@ -423,7 +423,7 @@ event, so most sites never need this.
 **Example — supply your SDK singleton:**
 
 ```php
-add_filter( 'wp_ai_rate_limiter_sdk_client', function ( $client ) {
+add_filter( 'wp_aiut_sdk_client', function ( $client ) {
     if ( class_exists( '\\My\\Sdk\\Client' ) ) {
         return \My\Sdk\Client::instance(); // must expose setHttpTransporter().
     }
@@ -433,7 +433,7 @@ add_filter( 'wp_ai_rate_limiter_sdk_client', function ( $client ) {
 
 ---
 
-### `wp_ai_rate_limiter_default_transporter`
+### `wp_aiut_default_transporter`
 
 Filters the SDK **default HTTP transporter** that the `Chaining_Transporter` wraps when no
 existing transporter is set (the AI‑plugin‑absent Path B scenario). Auto‑discovery tries to
@@ -446,7 +446,7 @@ that.
 - **Signature:**
 
   ```php
-  $transporter = apply_filters( 'wp_ai_rate_limiter_default_transporter', object|null $transporter );
+  $transporter = apply_filters( 'wp_aiut_default_transporter', object|null $transporter );
   ```
 
   | Param | Type | Description |
@@ -461,7 +461,7 @@ that.
 **Example:**
 
 ```php
-add_filter( 'wp_ai_rate_limiter_default_transporter', function ( $transporter ) {
+add_filter( 'wp_aiut_default_transporter', function ( $transporter ) {
     return new \My\Sdk\Http\Transporter(); // must expose send()/request()/transport()/__invoke().
 } );
 ```
@@ -570,11 +570,11 @@ alter the log context.
 
 ## REST API
 
-- **Namespace:** `wp-ai-rate-limiter/v1` (`Rest_Controller::NAMESPACE`).
+- **Namespace:** `wp-aiut/v1` (`Rest_Controller::NAMESPACE`).
 - **Registered in:** `src/Admin/class-rest-controller.php` on `rest_api_init`.
 - **Permission:** **every** route uses `Rest_Controller::check_permission()`, which checks
-  `current_user_can( apply_filters( 'wp_ai_rate_limiter_capability', 'manage_options' ) )`.
-  See [`wp_ai_rate_limiter_capability`](#wp_ai_rate_limiter_capability).
+  `current_user_can( apply_filters( 'wp_aiut_capability', 'manage_options' ) )`.
+  See [`wp_aiut_capability`](#wp_aiut_capability).
 - All reads delegate to `Data\Usage_Repository`; pricing to `Accounting\Cost_Calculator`;
   limits to `Limits\Limit_Repository`. Responses go through `rest_ensure_response()`.
 
@@ -657,7 +657,7 @@ Top‑line totals plus provider/model breakdown for a period.
 ### `GET /pricing`
 
 **Response:** `{ pricing }` — the active table from `Cost_Calculator::get_pricing()`
-(defaults + `aiut_pricing` option + [`wp_ai_rate_limiter_pricing`](#wp_ai_rate_limiter_pricing)
+(defaults + `aiut_pricing` option + [`wp_aiut_pricing`](#wp_aiut_pricing)
 filter). Prices are USD per 1e6 tokens.
 
 ### `PUT /pricing`
@@ -715,17 +715,17 @@ Delete a limit. **Response:** `{ deleted: bool }` from `Limit_Repository::delete
 
 | Constant | Value | Class |
 | --- | --- | --- |
-| `Caller_Resolver::ATTRIBUTE_ACTION` | `wp_ai_rate_limiter_attribute` | `Attribution\Caller_Resolver` |
+| `Caller_Resolver::ATTRIBUTE_ACTION` | `wp_aiut_attribute` | `Attribution\Caller_Resolver` |
 | `Result_Capturer::CORE_RESULT_ACTION` | `wp_ai_client_after_generate_result` | `Capture\Result_Capturer` |
 | `Result_Capturer::AI_LOG_FILTER` | `wpai_request_log_context` | `Capture\Result_Capturer` |
 | `Result_Capturer::CHARS_PER_TOKEN` | `4` | `Capture\Result_Capturer` |
-| `Cost_Calculator::PRICING_FILTER` | `wp_ai_rate_limiter_pricing` | `Accounting\Cost_Calculator` |
+| `Cost_Calculator::PRICING_FILTER` | `wp_aiut_pricing` | `Accounting\Cost_Calculator` |
 | `Cost_Calculator::PRICING_OPTION` | `aiut_pricing` | `Accounting\Cost_Calculator` |
-| `Rest_Controller::NAMESPACE` | `wp-ai-rate-limiter/v1` | `Admin\Rest_Controller` |
-| `Rest_Controller::CAPABILITY_FILTER` | `wp_ai_rate_limiter_capability` | `Admin\Rest_Controller` |
+| `Rest_Controller::NAMESPACE` | `wp-aiut/v1` | `Admin\Rest_Controller` |
+| `Rest_Controller::CAPABILITY_FILTER` | `wp_aiut_capability` | `Admin\Rest_Controller` |
 
-The literal hook names `wp_ai_rate_limiter_blocked`, `wp_ai_rate_limiter_notify`,
-`wp_ai_rate_limiter_usage_recorded`, `wp_ai_rate_limiter_alert_email`,
-`wp_ai_rate_limiter_chars_per_token`, `wp_ai_rate_limiter_sdk_client`, and
-`wp_ai_rate_limiter_default_transporter` are passed inline (not class constants) at their
+The literal hook names `wp_aiut_blocked`, `wp_aiut_notify`,
+`wp_aiut_usage_recorded`, `wp_aiut_alert_email`,
+`wp_aiut_chars_per_token`, `wp_aiut_sdk_client`, and
+`wp_aiut_default_transporter` are passed inline (not class constants) at their
 fire sites listed above.

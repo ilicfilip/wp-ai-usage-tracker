@@ -6,7 +6,7 @@
  * plugin inside the test WP install so its real hooks, schema and helpers are
  * available to the tests.
  *
- * @package WP_AI_Rate_Limiter
+ * @package WP_AIUT
  */
 
 $_tests_dir = getenv( 'WP_TESTS_DIR' );
@@ -32,10 +32,10 @@ require_once "{$_tests_dir}/includes/functions.php";
 /**
  * Manually load the plugin being tested.
  */
-function _wp_ai_rate_limiter_manually_load_plugin() {
+function _wp_aiut_manually_load_plugin() {
 	require dirname( __DIR__ ) . '/wp-ai-rate-limiter.php';
 }
-tests_add_filter( 'muplugins_loaded', '_wp_ai_rate_limiter_manually_load_plugin' );
+tests_add_filter( 'muplugins_loaded', '_wp_aiut_manually_load_plugin' );
 
 // Start up the WP testing environment.
 require "{$_tests_dir}/includes/bootstrap.php";
@@ -47,7 +47,7 @@ require "{$_tests_dir}/includes/bootstrap.php";
 // commit and behaves unpredictably across the suite, so we create the custom
 // tables here, outside any transaction. Per-test isolation for row data is then
 // provided for free by the framework's transaction rollback.
-\WP_AI_Rate_Limiter\Data\Schema::install();
+\WP_AIUT\Data\Schema::install();
 
 // Shared abstract base test case (not auto-collected: no -test.php suffix).
 require __DIR__ . '/class-aiut-testcase.php';

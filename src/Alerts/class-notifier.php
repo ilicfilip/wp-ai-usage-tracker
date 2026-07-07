@@ -2,10 +2,10 @@
 /**
  * Sends limit-threshold notifications (Phase 2).
  *
- * @package WP_AI_Rate_Limiter
+ * @package WP_AIUT
  */
 
-namespace WP_AI_Rate_Limiter\Alerts;
+namespace WP_AIUT\Alerts;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -13,7 +13,7 @@ defined( 'ABSPATH' ) || exit;
  * Delivers a notification when a usage limit crosses a threshold.
  *
  * Emails the site admin by default. Sites can route elsewhere (Slack, webhook)
- * by hooking the 'wp_ai_rate_limiter_notify' action, which fires with the same
+ * by hooking the 'wp_aiut_notify' action, which fires with the same
  * structured payload before the email is sent.
  */
 class Notifier {
@@ -37,7 +37,7 @@ class Notifier {
 		 * @param int                 $current Current usage.
 		 * @param int                 $percent Threshold crossed (80|100).
 		 */
-		do_action( 'wp_ai_rate_limiter_notify', $limit, $current, (int) $percent );
+		do_action( 'wp_aiut_notify', $limit, $current, (int) $percent );
 
 		$recipient = $this->recipient();
 
@@ -47,7 +47,7 @@ class Notifier {
 
 		$subject = sprintf(
 			/* translators: 1: percent, 2: scope key. */
-			__( '[AI Usage] %1$d%% of limit reached for %2$s', 'wp-ai-rate-limiter' ),
+			__( '[AI Usage] %1$d%% of limit reached for %2$s', 'wp-aiut' ),
 			(int) $percent,
 			$this->scope_label( $limit )
 		);
@@ -71,7 +71,7 @@ class Notifier {
 		 * @param string $email Default admin email.
 		 */
 		$email = (string) apply_filters(
-			'wp_ai_rate_limiter_alert_email',
+			'wp_aiut_alert_email',
 			(string) get_option( 'admin_email' )
 		);
 
@@ -90,14 +90,14 @@ class Notifier {
 		$lines = [
 			sprintf(
 				/* translators: 1: percent, 2: scope label. */
-				__( 'AI usage has reached %1$d%% of a configured limit for %2$s.', 'wp-ai-rate-limiter' ),
+				__( 'AI usage has reached %1$d%% of a configured limit for %2$s.', 'wp-aiut' ),
 				$percent,
 				$this->scope_label( $limit )
 			),
 			'',
 			sprintf(
 				/* translators: 1: current usage, 2: threshold, 3: unit. */
-				__( 'Current: %1$s of %2$s %3$s (%4$s).', 'wp-ai-rate-limiter' ),
+				__( 'Current: %1$s of %2$s %3$s (%4$s).', 'wp-aiut' ),
 				$this->format_value( $limit['limit_type'], $current ),
 				$this->format_value( $limit['limit_type'], (int) $limit['threshold'] ),
 				$limit['limit_type'],
@@ -107,7 +107,7 @@ class Notifier {
 
 		if ( 'hard' === $limit['enforcement'] && $percent >= 100 ) {
 			$lines[] = '';
-			$lines[] = __( 'This is a hard limit: further requests in this scope are being blocked.', 'wp-ai-rate-limiter' );
+			$lines[] = __( 'This is a hard limit: further requests in this scope are being blocked.', 'wp-aiut' );
 		}
 
 		return implode( "\n", $lines );
@@ -121,7 +121,7 @@ class Notifier {
 	 */
 	private function scope_label( array $limit ) {
 		$key = '*' === $limit['scope_key']
-			? __( 'all', 'wp-ai-rate-limiter' )
+			? __( 'all', 'wp-aiut' )
 			: $limit['scope_key'];
 
 		return $limit['scope_type'] . ' ' . $key;

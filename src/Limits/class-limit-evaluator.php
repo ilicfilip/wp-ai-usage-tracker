@@ -2,13 +2,13 @@
 /**
  * Evaluates configured limits against current usage (Phase 2).
  *
- * @package WP_AI_Rate_Limiter
+ * @package WP_AIUT
  */
 
-namespace WP_AI_Rate_Limiter\Limits;
+namespace WP_AIUT\Limits;
 
-use WP_AI_Rate_Limiter\Accounting\Counter_Store;
-use WP_AI_Rate_Limiter\Periods\Window;
+use WP_AIUT\Accounting\Counter_Store;
+use WP_AIUT\Periods\Window;
 
 defined( 'ABSPATH' ) || exit;
 

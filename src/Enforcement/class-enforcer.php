@@ -2,13 +2,13 @@
 /**
  * Enforcement decision for the pre-request prevent filter (Phase 2).
  *
- * @package WP_AI_Rate_Limiter
+ * @package WP_AIUT
  */
 
-namespace WP_AI_Rate_Limiter\Enforcement;
+namespace WP_AIUT\Enforcement;
 
-use WP_AI_Rate_Limiter\Limits\Limit_Repository;
-use WP_AI_Rate_Limiter\Limits\Limit_Evaluator;
+use WP_AIUT\Limits\Limit_Repository;
+use WP_AIUT\Limits\Limit_Evaluator;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -85,7 +85,7 @@ class Enforcer {
 			 * @param array<string,string> $scopes The request's scope set.
 			 * @param string               $confidence Attribution confidence.
 			 */
-			do_action( 'wp_ai_rate_limiter_blocked', $breach, $scopes, $confidence );
+			do_action( 'wp_aiut_blocked', $breach, $scopes, $confidence );
 
 			return true;
 		} catch ( \Throwable $e ) {

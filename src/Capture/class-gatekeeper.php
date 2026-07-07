@@ -2,13 +2,13 @@
 /**
  * Capture gatekeeper — hooks the pre-request prevent filter (observe-only).
  *
- * @package WP_AI_Rate_Limiter
+ * @package WP_AIUT
  */
 
-namespace WP_AI_Rate_Limiter\Capture;
+namespace WP_AIUT\Capture;
 
-use WP_AI_Rate_Limiter\Attribution\Caller_Resolver;
-use WP_AI_Rate_Limiter\Enforcement\Enforcer;
+use WP_AIUT\Attribution\Caller_Resolver;
+use WP_AIUT\Enforcement\Enforcer;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -83,13 +83,13 @@ class Gatekeeper {
 
 		if ( $result_capturer instanceof Result_Capturer ) {
 			$this->result_capturer = $result_capturer;
-		} elseif ( class_exists( '\\WP_AI_Rate_Limiter\\Capture\\Result_Capturer' ) ) {
+		} elseif ( class_exists( '\\WP_AIUT\\Capture\\Result_Capturer' ) ) {
 			$this->result_capturer = new Result_Capturer( $this );
 		}
 
 		if ( $enforcer instanceof Enforcer ) {
 			$this->enforcer = $enforcer;
-		} elseif ( class_exists( '\\WP_AI_Rate_Limiter\\Enforcement\\Enforcer' ) ) {
+		} elseif ( class_exists( '\\WP_AIUT\\Enforcement\\Enforcer' ) ) {
 			$this->enforcer = new Enforcer();
 		}
 	}

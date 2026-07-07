@@ -2,10 +2,10 @@
 /**
  * Chaining HTTP transporter decorator (Path B).
  *
- * @package WP_AI_Rate_Limiter
+ * @package WP_AIUT
  */
 
-namespace WP_AI_Rate_Limiter\Capture;
+namespace WP_AIUT\Capture;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -100,7 +100,7 @@ class Chaining_Transporter {
 		 *
 		 * @param object|null $transporter Default transporter, or null.
 		 */
-		$filtered = apply_filters( 'wp_ai_rate_limiter_default_transporter', null );
+		$filtered = apply_filters( 'wp_aiut_default_transporter', null );
 
 		if ( is_object( $filtered ) ) {
 			return $filtered;

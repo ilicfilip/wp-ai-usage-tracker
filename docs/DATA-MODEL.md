@@ -1,6 +1,6 @@
 # Data Model & Storage Reference
 
-This is the database and storage reference for **AI Usage Tracker** (`wp-ai-rate-limiter`).
+This is the database and storage reference for **AI Usage Tracker** (`wp-aiut`).
 It documents the three custom tables, the scope/period model that ties them together, the
 options/transients the plugin uses, and the deliberate design decisions behind them.
 
@@ -11,7 +11,7 @@ Read this alongside the source it describes:
 - `src/Accounting/class-usage-recorder.php` — the single write entry point (`record()`).
 - `src/Limits/class-limit-repository.php` — limits CRUD + the cached fast-path flag.
 - `src/Periods/class-window.php` — timezone-aware period keys and ranges.
-- `wp-ai-rate-limiter.php` — `wp_ai_rate_limiter_table()` (the name helper).
+- `wp-ai-rate-limiter.php` — `wp_aiut_table()` (the name helper).
 - `uninstall.php` — what gets dropped/deleted (and what doesn't).
 
 ---
@@ -22,7 +22,7 @@ All tables are named `{$wpdb->prefix}aiut_{name}`. The single source of truth is
 helper in `wp-ai-rate-limiter.php`:
 
 ```php
-function wp_ai_rate_limiter_table( $name ) {
+function wp_aiut_table( $name ) {
 	global $wpdb;
 	return $wpdb->prefix . 'aiut_' . $name;
 }
@@ -382,7 +382,7 @@ Enum columns are clamped to their allowed sets, falling back to the defaults abo
 | Key                         | Storage   | Autoload | Written by | Purpose |
 | --------------------------- | --------- | -------- | ---------- | ------- |
 | `aiut_db_version`           | option    | `false`  | `Schema::install()` | Installed schema version (`Schema::DB_VERSION_OPTION`). Currently `'2'`. |
-| `aiut_pricing`              | option    | (default) | `Cost_Calculator` / REST `PUT /pricing` | Admin pricing overrides (`Cost_Calculator::PRICING_OPTION`). Merged over built-in rates; also filterable via `wp_ai_rate_limiter_pricing`. |
+| `aiut_pricing`              | option    | (default) | `Cost_Calculator` / REST `PUT /pricing` | Admin pricing overrides (`Cost_Calculator::PRICING_OPTION`). Merged over built-in rates; also filterable via `wp_aiut_pricing`. |
 | `aiut_has_hard_limits`      | option    | `true`   | `Limit_Repository::refresh_hard_flag()` | **Cached fast-path flag.** `1` if any `enabled = 1 AND enforcement = 'hard'` limit exists, else `0`. Read by the Enforcer on every prompt to short-circuit when there's nothing to enforce. Recomputed on every limit save/delete. Autoloaded so the hot-path read is free. |
 | `aiut_delete_on_uninstall`  | option    | (default) | admin/settings | Opt-in: only when truthy does `uninstall.php` drop tables/delete options. Default behaviour keeps all data. |
 | `aiut_settings`             | option    | (default) | settings    | General settings blob (deleted on opt-in uninstall). |

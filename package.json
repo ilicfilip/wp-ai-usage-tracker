@@ -1,5 +1,5 @@
 {
-	"name": "wp-ai-rate-limiter",
+	"name": "wp-aiut",
 	"version": "0.1.0",
 	"description": "AI Usage Tracker dashboard — React admin UI for the WordPress 7.0 AI Client usage tracker.",
 	"author": "Filip Ilic",

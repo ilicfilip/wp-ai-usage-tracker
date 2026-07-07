@@ -2,13 +2,13 @@
 /**
  * Tests for the Schema installer.
  *
- * @package WP_AI_Rate_Limiter
+ * @package WP_AIUT
  */
 
-use WP_AI_Rate_Limiter\Data\Schema;
+use WP_AIUT\Data\Schema;
 
 /**
- * @covers \WP_AI_Rate_Limiter\Data\Schema
+ * @covers \WP_AIUT\Data\Schema
  */
 class Schema_Test extends AIUT_TestCase {
 

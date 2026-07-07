@@ -2,10 +2,10 @@
 /**
  * Database schema installer for AI Usage Tracker.
  *
- * @package WP_AI_Rate_Limiter
+ * @package WP_AIUT
  */
 
-namespace WP_AI_Rate_Limiter\Data;
+namespace WP_AIUT\Data;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -40,7 +40,7 @@ class Schema {
 	 * @return string
 	 */
 	public static function events_table() {
-		return wp_ai_rate_limiter_table( 'events' );
+		return wp_aiut_table( 'events' );
 	}
 
 	/**
@@ -49,7 +49,7 @@ class Schema {
 	 * @return string
 	 */
 	public static function counters_table() {
-		return wp_ai_rate_limiter_table( 'counters' );
+		return wp_aiut_table( 'counters' );
 	}
 
 	/**
@@ -58,7 +58,7 @@ class Schema {
 	 * @return string
 	 */
 	public static function limits_table() {
-		return wp_ai_rate_limiter_table( 'limits' );
+		return wp_aiut_table( 'limits' );
 	}
 
 	/**

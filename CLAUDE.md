@@ -4,7 +4,7 @@ Guidance for working in this repository.
 
 ## What this is
 
-**AI Usage Tracker** (slug `wp-ai-rate-limiter`) — a WordPress plugin that observes
+**AI Usage Tracker** (slug `wp-aiut`) — a WordPress plugin that observes
 every **WordPress 7.0 AI Client** request, attributes it to the originating plugin and
 user, and records tokens + estimated cost.
 
@@ -92,7 +92,7 @@ from the DTO, `estimated = 0`. It is hooked in `class-result-capturer.php`
    above). The intent→result match is by recency, since the event doesn't echo the
    builder identity.
 2. **Attribution.** Nothing tells us which plugin made the call. Resolved by layering, in
-   confidence order: self-ID action hook (`wp_ai_rate_limiter_attribute`, high) →
+   confidence order: self-ID action hook (`wp_aiut_attribute`, high) →
    `debug_backtrace` path-mapping to a plugin/theme slug (medium) → `__unknown__` (low).
    User is `get_current_user_id()` / role, or `__system__` for cron/REST.
 
@@ -102,7 +102,7 @@ you don't trust. The `estimated` / `confidence` fields exist to make this visibl
 
 ## Architecture / layout
 
-PHP under `src/`, namespace `\WP_AI_Rate_Limiter\`. React dashboard under `assets/src/`,
+PHP under `src/`, namespace `\WP_AIUT\`. React dashboard under `assets/src/`,
 built to `build/`.
 
 ```
@@ -126,7 +126,7 @@ src/
   Periods/
     class-window.php              tz-aware day/month period keys + ranges
   Admin/
-    class-rest-controller.php     namespace wp-ai-rate-limiter/v1
+    class-rest-controller.php     namespace wp-aiut/v1
     class-settings-page.php       Tools -> AI Usage; enqueues the React build
 assets/src/{index.js,App.js,style.scss}   React dashboard (four views, spec §7)
 ```
@@ -150,20 +150,20 @@ Tables are `{prefix}aiut_*` — `$wpdb->prefix` already ends in `_`, so the help
   `Limit_Evaluator` (`first_hard_breach()`, confidence-gated; `current_usage()` reads
   counters).
 - `src/Enforcement/class-enforcer.php`: `should_block(scopes, confidence)` — fast-path
-  returns false when no hard limits; else first breach → `do_action('wp_ai_rate_limiter_blocked')`
+  returns false when no hard limits; else first breach → `do_action('wp_aiut_blocked')`
   + return true. **Fails open** on any error.
 - The Gatekeeper builds `scopes = {plugin, user, role, global}` (no model pre-request) and
   calls the Enforcer after recording the intent.
-- `src/Alerts/`: `Threshold_Watcher` (hooks `wp_ai_rate_limiter_usage_recorded`, detects
+- `src/Alerts/`: `Threshold_Watcher` (hooks `wp_aiut_usage_recorded`, detects
   80%/100% crossings, per-period transient dedup) + `Notifier` (`wp_mail`, plus
-  `wp_ai_rate_limiter_notify` action and `wp_ai_rate_limiter_alert_email` filter).
+  `wp_aiut_notify` action and `wp_aiut_alert_email` filter).
 - Confidence gating answers "we can't assume plugins self-identify": **backtrace is the
   no-cooperation default** (medium); self-ID is an optional accuracy upgrade (high). Hard
   limits default to blocking medium+high; a limit's `min_confidence = high` restricts it to
   self-identified callers only. `__unknown__` is never singled out (but can be capped as a
   group via a global/wildcard limit).
 
-### REST (namespace `wp-ai-rate-limiter/v1`, cap `manage_options`, filterable)
+### REST (namespace `wp-aiut/v1`, cap `manage_options`, filterable)
 `GET /usage`, `GET /timeseries`, `GET /totals`, `GET /pricing`, `PUT /pricing`,
 `GET /scopes`, and (Phase 2) `GET/POST /limits`, `PUT/DELETE /limits/{id}`. All reads
 delegate to `Usage_Repository`; pricing to `Cost_Calculator`; limits to `Limit_Repository`.
@@ -179,9 +179,9 @@ listener would never fire).
 
 - **Coding standard:** WordPress (WPCS / WordPress-Extra + Docs). Tabs, snake_case
   functions/vars, full docblocks, **short arrays**, Yoda off. Prefixes:
-  `WP_AI_Rate_Limiter` / `wp_ai_rate_limiter` / `aiut`. Text domain `wp-ai-rate-limiter`.
+  `WP_AIUT` / `wp_aiut` / `aiut`. Text domain `wp-aiut`.
 - **File naming (WP convention):** class files are `class-{lowercase-hyphenated}.php`,
-  e.g. `\WP_AI_Rate_Limiter\Capture\Gatekeeper` → `src/Capture/class-gatekeeper.php`.
+  e.g. `\WP_AIUT\Capture\Gatekeeper` → `src/Capture/class-gatekeeper.php`.
   The autoloader in the main file enforces this mapping — keep them in sync when adding
   classes.
 - **PHP 7.4+** syntax only (no enums, no `readonly`, no PHP 8-only syntax). Typed
@@ -219,7 +219,7 @@ enqueue in `class-settings-page.php` must reference that exact name.
 
 Develop against a real WordPress 7.0 install with an AI provider configured. The plugin is symlinked into
 its `wp-content/plugins/`. To test real capture, activate a small caller plugin that runs
-`do_action('wp_ai_rate_limiter_attribute','slug'); wp_ai_client_prompt('hi')->generate_text();`
+`do_action('wp_aiut_attribute','slug'); wp_ai_client_prompt('hi')->generate_text();`
 then check Tools → AI Usage. **Real AI calls cost money — keep prompts minimal and few.**
 
 Already verified live (2026-05-30): activation + schema, all 6 REST routes (200 for an

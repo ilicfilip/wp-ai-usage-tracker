@@ -2,13 +2,13 @@
 /**
  * Tests for the atomic Counter_Store.
  *
- * @package WP_AI_Rate_Limiter
+ * @package WP_AIUT
  */
 
-use WP_AI_Rate_Limiter\Accounting\Counter_Store;
+use WP_AIUT\Accounting\Counter_Store;
 
 /**
- * @covers \WP_AI_Rate_Limiter\Accounting\Counter_Store
+ * @covers \WP_AIUT\Accounting\Counter_Store
  */
 class Counter_Store_Test extends AIUT_TestCase {
 

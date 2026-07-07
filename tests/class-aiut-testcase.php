@@ -2,12 +2,12 @@
 /**
  * Shared base test case: installs the plugin schema and resets tables.
  *
- * @package WP_AI_Rate_Limiter
+ * @package WP_AIUT
  */
 
-use WP_AI_Rate_Limiter\Limits\Limit_Repository;
-use WP_AI_Rate_Limiter\Accounting\Counter_Store;
-use WP_AI_Rate_Limiter\Periods\Window;
+use WP_AIUT\Limits\Limit_Repository;
+use WP_AIUT\Accounting\Counter_Store;
+use WP_AIUT\Periods\Window;
 
 /**
  * Base class for the plugin's integration tests.

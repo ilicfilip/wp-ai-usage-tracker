@@ -2,10 +2,10 @@
 /**
  * Time-period helpers (timezone-aware, no database access).
  *
- * @package WP_AI_Rate_Limiter
+ * @package WP_AIUT
  */
 
-namespace WP_AI_Rate_Limiter\Periods;
+namespace WP_AIUT\Periods;
 
 defined( 'ABSPATH' ) || exit;
 

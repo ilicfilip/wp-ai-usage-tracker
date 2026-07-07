@@ -20,17 +20,17 @@ import './style.scss';
  * @type {{restRoot: string, nonce: string, currency: string, attribute: string}}
  */
 const config = window.wpAiUsageTracker || {
-	restRoot: '/wp-json/wp-ai-rate-limiter/v1/',
+	restRoot: '/wp-json/wp-aiut/v1/',
 	nonce: '',
 	currency: 'USD',
-	attribute: 'wp_ai_rate_limiter_attribute',
+	attribute: 'wp_aiut_attribute',
 };
 
 // Authenticate api-fetch with the REST nonce. We deliberately do NOT use
 // createRootURLMiddleware: WordPress's own wp-api-fetch already installs a
 // default root-URL middleware ('/wp-json/') that takes precedence, so a custom
 // namespace root would be ignored and requests would 404. Instead every call
-// passes the full namespaced path (e.g. 'wp-ai-rate-limiter/v1/totals').
+// passes the full namespaced path (e.g. 'wp-aiut/v1/totals').
 if ( config.nonce ) {
 	apiFetch.use( apiFetch.createNonceMiddleware( config.nonce ) );
 }

@@ -2,12 +2,12 @@
 /**
  * CRUD over the configured usage limits (Phase 2).
  *
- * @package WP_AI_Rate_Limiter
+ * @package WP_AIUT
  */
 
-namespace WP_AI_Rate_Limiter\Limits;
+namespace WP_AIUT\Limits;
 
-use WP_AI_Rate_Limiter\Data\Schema;
+use WP_AIUT\Data\Schema;
 
 defined( 'ABSPATH' ) || exit;
 

@@ -1,7 +1,7 @@
 # Architecture
 
 > The **map** doc. Read this first to understand how AI Usage Tracker
-> (`wp-ai-rate-limiter`) is wired and *why*. For column-level table layouts see
+> (`wp-aiut`) is wired and *why*. For column-level table layouts see
 > [DATA-MODEL.md](./DATA-MODEL.md); for every hook name and signature see
 > [HOOKS.md](./HOOKS.md); for the reasoning behind specific trade-offs see
 > [DECISIONS.md](./DECISIONS.md).
@@ -86,7 +86,7 @@ reliable first**, attaching a `confidence` to each:
 
 | Order | Mechanism | `source_type` | `confidence` |
 |-------|-----------|---------------|--------------|
-| 1 | **Self-ID action** — a cooperating plugin fires `do_action( 'wp_ai_rate_limiter_attribute', 'slug' )` right before its prompt; we read the top of a request-scoped stack | `plugin` | `high` |
+| 1 | **Self-ID action** — a cooperating plugin fires `do_action( 'wp_aiut_attribute', 'slug' )` right before its prompt; we read the top of a request-scoped stack | `plugin` | `high` |
 | 2 | **Backtrace path-mapping** — walk `debug_backtrace()` (depth-capped, args ignored), map the first frame under `wp-content/plugins/<slug>/` or the theme root to that slug; memoised per call site | `plugin` / `theme` | `medium` |
 | 3 | **Unknown** — `__unknown__`; still tracked, never dropped | `unknown` | `low` |
 
@@ -131,7 +131,7 @@ means a low-confidence attribution is never used to single out a plugin.
    │                 for each scope -> enabled hard limits (key + '*' wildcard) │
    │                 confidence >= limit.min_confidence ?                       │
    │                 current_usage (Counter_Store) >= threshold > 0 ?           │
-   │            • breach -> do_action('wp_ai_rate_limiter_blocked'); return true│
+   │            • breach -> do_action('wp_aiut_blocked'); return true│
    │            • any \Throwable -> return false  (FAIL OPEN)                    │
    │       return true  => core returns WP_Error('prompt_prevented', 503)       │
    │       return $prevent (usually false) => request proceeds                  │
@@ -163,7 +163,7 @@ means a low-confidence attribution is never used to single out a plugin.
    │    4. FAN OUT to {prefix}aiut_counters via Counter_Store::increment()      │
    │         scopes: plugin, user, role, model("provider/model"), global("__all__")
    │         × periods: day + month   (atomic INSERT .. ON DUPLICATE KEY UPDATE)│
-   │    5. do_action( 'wp_ai_rate_limiter_usage_recorded', $data, $scopes )     │
+   │    5. do_action( 'wp_aiut_usage_recorded', $data, $scopes )     │
    └──────────────────────────────────────────────────────────────────────────┘
                                           │
                                           ▼
@@ -172,7 +172,7 @@ means a low-confidence attribution is never used to single out a plugin.
    │    for each scope -> enabled limits (key + '*') -> current_usage / threshold
    │    pct >= 100 (alert_100) or >= 80 (alert_80) ?                            │
    │    per-(limit,scope,period,percent) transient dedup -> Notifier::notify()  │
-   │       do_action('wp_ai_rate_limiter_notify') + wp_mail(admin)             │
+   │       do_action('wp_aiut_notify') + wp_mail(admin)             │
    └──────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -224,7 +224,7 @@ Each class's responsibility, read from its source docblock.
 
 | Class | File | Responsibility |
 |-------|------|----------------|
-| `Usage_Recorder` | `class-usage-recorder.php` | **Single write entry point** (`::record($row)`): appends one `aiut_events` row and fans out atomic counter increments across all five scopes × both periods, then fires `wp_ai_rate_limiter_usage_recorded`. |
+| `Usage_Recorder` | `class-usage-recorder.php` | **Single write entry point** (`::record($row)`): appends one `aiut_events` row and fans out atomic counter increments across all five scopes × both periods, then fires `wp_aiut_usage_recorded`. |
 | `Counter_Store` | `class-counter-store.php` | Atomic counter upserts (`INSERT … ON DUPLICATE KEY UPDATE` on the `UNIQUE(scope_type, scope_key, period_kind, period_key)` key) plus `read()` / `read_one()` for the dashboard and evaluator. |
 | `Cost_Calculator` | `class-cost-calculator.php` | Tokens → estimated cost in **integer micros** (1e-6 USD). Holds the filterable/admin-overridable pricing table; `rates_for()` resolves exact → longest-prefix → provider-default → global-default. |
 
@@ -252,27 +252,27 @@ Each class's responsibility, read from its source docblock.
 
 | Class | File | Responsibility |
 |-------|------|----------------|
-| `Enforcer` | `class-enforcer.php` | `should_block(scopes, confidence)`: fast-path `false` when no hard limits; else first breach → `do_action('wp_ai_rate_limiter_blocked')` + return `true`. **Fails open** (returns `false`) on any `\Throwable`. |
+| `Enforcer` | `class-enforcer.php` | `should_block(scopes, confidence)`: fast-path `false` when no hard limits; else first breach → `do_action('wp_aiut_blocked')` + return `true`. **Fails open** (returns `false`) on any `\Throwable`. |
 
 ### `Alerts/` — threshold notifications (Phase 2)
 
 | Class | File | Responsibility |
 |-------|------|----------------|
-| `Threshold_Watcher` | `class-threshold-watcher.php` | Hooks `wp_ai_rate_limiter_usage_recorded`; for each touched scope checks enabled limits for 80%/100% crossings; per-(limit, scope, period, percent) transient dedup so each alert fires at most once per period. |
-| `Notifier` | `class-notifier.php` | Delivers the alert: fires `wp_ai_rate_limiter_notify` (for custom channels) then `wp_mail()` to the (filterable) admin recipient. Formats cost micros → USD. |
+| `Threshold_Watcher` | `class-threshold-watcher.php` | Hooks `wp_aiut_usage_recorded`; for each touched scope checks enabled limits for 80%/100% crossings; per-(limit, scope, period, percent) transient dedup so each alert fires at most once per period. |
+| `Notifier` | `class-notifier.php` | Delivers the alert: fires `wp_aiut_notify` (for custom channels) then `wp_mail()` to the (filterable) admin recipient. Formats cost micros → USD. |
 
 ### `Admin/` — REST API and dashboard
 
 | Class | File | Responsibility |
 |-------|------|----------------|
-| `Rest_Controller` | `class-rest-controller.php` | Registers the `wp-ai-rate-limiter/v1` namespace and its routes. Reads delegate to `Usage_Repository`; pricing to `Cost_Calculator`; limits to `Limit_Repository`. Every route guarded by a filterable `manage_options` permission callback. |
+| `Rest_Controller` | `class-rest-controller.php` | Registers the `wp-aiut/v1` namespace and its routes. Reads delegate to `Usage_Repository`; pricing to `Cost_Calculator`; limits to `Limit_Repository`. Every route guarded by a filterable `manage_options` permission callback. |
 | `Settings_Page` | `class-settings-page.php` | Adds Tools → AI Usage and enqueues the compiled React build *only on its own screen*; injects `window.wpAiUsageTracker` (REST root + `wp_rest` nonce). |
 
 ### Bootstrap (`wp-ai-rate-limiter.php`) and wiring (`Plugin`)
 
 `wp-ai-rate-limiter.php` defines constants, registers the PSR-4-ish autoloader
-(`\WP_AI_Rate_Limiter\Capture\Gatekeeper` → `src/Capture/class-gatekeeper.php`),
-guards activation/boot on the environment (`wp_ai_rate_limiter_environment_ok()`
+(`\WP_AIUT\Capture\Gatekeeper` → `src/Capture/class-gatekeeper.php`),
+guards activation/boot on the environment (`wp_aiut_environment_ok()`
 requires WP ≥ 7.0 + `wp_ai_client_prompt`), installs the schema on activation,
 and calls `Plugin::boot()` on `plugins_loaded`.
 
@@ -295,18 +295,18 @@ the components those callbacks construct.
 | `init` | `Plugin::register_runtime()` | Constructs Gatekeeper, Rest_Controller, Threshold_Watcher and calls their `register()`. |
 | `admin_menu` | `Plugin::register_admin()` | Constructs Settings_Page and calls `register()`. |
 | `wp_ai_client_prevent_prompt` (filter, 10/2) | `Gatekeeper::register()` | `observe_prompt()` — attribution + pending intent + enforcement decision. **The only place the plugin can block.** |
-| `wp_ai_rate_limiter_attribute` (action, 10/1) | `Caller_Resolver::register()` (called from `Gatekeeper::register()`) | Pushes a self-identified slug onto the stack (high-confidence attribution). |
+| `wp_aiut_attribute` (action, 10/1) | `Caller_Resolver::register()` (called from `Gatekeeper::register()`) | Pushes a self-identified slug onto the stack (high-confidence attribution). |
 | `wp_ai_client_after_generate_result` (action, 10/1) | `Result_Capturer::register()` | **Primary capture** — real DTO tokens. |
 | `wpai_request_log_context` (filter, 10/3) | `Result_Capturer::register()` | Fallback Path A (AI logging plugin; no-op when absent). |
 | `init` (prio 5) | `Result_Capturer::register()` | Installs the chaining transporter (fallback Path B). |
 | `shutdown` (prio 100) | `Result_Capturer::register()` | Finalises leftover intents with chars/4 estimates (fallback Path C). |
-| `rest_api_init` | `Rest_Controller::register()` | Registers all `wp-ai-rate-limiter/v1` routes. |
+| `rest_api_init` | `Rest_Controller::register()` | Registers all `wp-aiut/v1` routes. |
 | `admin_enqueue_scripts` | `Settings_Page::register()` | Enqueues the React build on its own screen only. |
-| `wp_ai_rate_limiter_usage_recorded` (action, 10/2) | `Threshold_Watcher::register()` | 80%/100% crossing detection + alerts. |
+| `wp_aiut_usage_recorded` (action, 10/2) | `Threshold_Watcher::register()` | 80%/100% crossing detection + alerts. |
 | `admin_notices` | `wp-ai-rate-limiter.php` (+ `Settings_Page`) | Activation-refused notice; missing-build notice. |
 
 See [HOOKS.md](./HOOKS.md) for full signatures, the public extension hooks
-(`wp_ai_rate_limiter_blocked`, `_notify`, `_alert_email`, `_capability`,
+(`wp_aiut_blocked`, `_notify`, `_alert_email`, `_capability`,
 `_pricing`, `_chars_per_token`, `_sdk_client`, `_default_transporter`), and the
 REST route table.
 
@@ -314,11 +314,11 @@ REST route table.
 
 ## 6. REST + dashboard at a glance
 
-- **REST namespace:** `wp-ai-rate-limiter/v1`. Routes: `GET /usage`,
+- **REST namespace:** `wp-aiut/v1`. Routes: `GET /usage`,
   `GET /timeseries`, `GET /totals`, `GET|PUT /pricing`, `GET /scopes`, and
   (Phase 2) `GET|POST /limits`, `PUT|DELETE /limits/(?P<id>\d+)`. Every route is
   guarded by `check_permission()` → `current_user_can( apply_filters(
-  'wp_ai_rate_limiter_capability', 'manage_options' ) )`.
+  'wp_aiut_capability', 'manage_options' ) )`.
 - **Dashboard:** React via `@wordpress/scripts`, mounted at Tools → AI Usage
   into `#wp-aiut-root`. Source in `assets/src/{index.js,App.js,Limits.js,
   style.scss}`, built to `build/`. Note `wp-scripts` emits the stylesheet as

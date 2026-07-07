@@ -2,10 +2,10 @@
 /**
  * Plugin wiring / container.
  *
- * @package WP_AI_Rate_Limiter
+ * @package WP_AIUT
  */
 
-namespace WP_AI_Rate_Limiter;
+namespace WP_AIUT;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -29,28 +29,28 @@ class Plugin {
 	/**
 	 * Capture gatekeeper (observe-only in Phase 1).
 	 *
-	 * @var \WP_AI_Rate_Limiter\Capture\Gatekeeper|null
+	 * @var \WP_AIUT\Capture\Gatekeeper|null
 	 */
 	private $gatekeeper = null;
 
 	/**
 	 * Admin settings page.
 	 *
-	 * @var \WP_AI_Rate_Limiter\Admin\Settings_Page|null
+	 * @var \WP_AIUT\Admin\Settings_Page|null
 	 */
 	private $settings_page = null;
 
 	/**
 	 * REST controller.
 	 *
-	 * @var \WP_AI_Rate_Limiter\Admin\Rest_Controller|null
+	 * @var \WP_AIUT\Admin\Rest_Controller|null
 	 */
 	private $rest_controller = null;
 
 	/**
 	 * Threshold watcher (Phase 2 alerts).
 	 *
-	 * @var \WP_AI_Rate_Limiter\Alerts\Threshold_Watcher|null
+	 * @var \WP_AIUT\Alerts\Threshold_Watcher|null
 	 */
 	private $threshold_watcher = null;
 
@@ -96,16 +96,16 @@ class Plugin {
 	 * @return void
 	 */
 	public function register_runtime() {
-		if ( null === $this->gatekeeper && class_exists( '\\WP_AI_Rate_Limiter\\Capture\\Gatekeeper' ) ) {
-			$this->gatekeeper = new \WP_AI_Rate_Limiter\Capture\Gatekeeper();
+		if ( null === $this->gatekeeper && class_exists( '\\WP_AIUT\\Capture\\Gatekeeper' ) ) {
+			$this->gatekeeper = new \WP_AIUT\Capture\Gatekeeper();
 
 			if ( method_exists( $this->gatekeeper, 'register' ) ) {
 				$this->gatekeeper->register();
 			}
 		}
 
-		if ( null === $this->rest_controller && class_exists( '\\WP_AI_Rate_Limiter\\Admin\\Rest_Controller' ) ) {
-			$this->rest_controller = new \WP_AI_Rate_Limiter\Admin\Rest_Controller();
+		if ( null === $this->rest_controller && class_exists( '\\WP_AIUT\\Admin\\Rest_Controller' ) ) {
+			$this->rest_controller = new \WP_AIUT\Admin\Rest_Controller();
 
 			if ( method_exists( $this->rest_controller, 'register' ) ) {
 				$this->rest_controller->register();
@@ -113,8 +113,8 @@ class Plugin {
 		}
 
 		// Threshold alerts (Phase 2): watch recorded usage for limit crossings.
-		if ( null === $this->threshold_watcher && class_exists( '\\WP_AI_Rate_Limiter\\Alerts\\Threshold_Watcher' ) ) {
-			$this->threshold_watcher = new \WP_AI_Rate_Limiter\Alerts\Threshold_Watcher();
+		if ( null === $this->threshold_watcher && class_exists( '\\WP_AIUT\\Alerts\\Threshold_Watcher' ) ) {
+			$this->threshold_watcher = new \WP_AIUT\Alerts\Threshold_Watcher();
 
 			if ( method_exists( $this->threshold_watcher, 'register' ) ) {
 				$this->threshold_watcher->register();
@@ -130,8 +130,8 @@ class Plugin {
 	 * @return void
 	 */
 	public function register_admin() {
-		if ( null === $this->settings_page && class_exists( '\\WP_AI_Rate_Limiter\\Admin\\Settings_Page' ) ) {
-			$this->settings_page = new \WP_AI_Rate_Limiter\Admin\Settings_Page();
+		if ( null === $this->settings_page && class_exists( '\\WP_AIUT\\Admin\\Settings_Page' ) ) {
+			$this->settings_page = new \WP_AIUT\Admin\Settings_Page();
 
 			if ( method_exists( $this->settings_page, 'register' ) ) {
 				$this->settings_page->register();
@@ -142,7 +142,7 @@ class Plugin {
 	/**
 	 * Access the Gatekeeper instance (may be null before 'init').
 	 *
-	 * @return \WP_AI_Rate_Limiter\Capture\Gatekeeper|null
+	 * @return \WP_AIUT\Capture\Gatekeeper|null
 	 */
 	public function gatekeeper() {
 		return $this->gatekeeper;

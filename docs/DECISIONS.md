@@ -1,6 +1,6 @@
 # Decisions & Why (ADR log)
 
-> For the next agent taking over **AI Usage Tracker** (`wp-ai-rate-limiter`).
+> For the next agent taking over **AI Usage Tracker** (`wp-aiut`).
 >
 > This is the *why* behind the non-obvious choices. The code says **what** it does; this
 > file says **why it does it that way** and **what breaks if you change it**. Each entry
@@ -135,7 +135,7 @@ reflect *prior* completed requests. So a cap is enforced one request after it is
 ## ADR-4 — Confidence-gated enforcement: backtrace is the no-cooperation default; self-ID is the high-confidence upgrade; `__unknown__` is never singled out
 
 **Decision.** Attribution carries a confidence level and enforcement is gated on it:
-- **high** — the plugin self-identified via `do_action( 'wp_ai_rate_limiter_attribute',
+- **high** — the plugin self-identified via `do_action( 'wp_aiut_attribute',
   'slug' )` before its prompt.
 - **medium** — we mapped a `debug_backtrace()` frame to a plugin/theme directory slug.
 - **low** — `__unknown__`; nothing could be resolved.
@@ -242,7 +242,7 @@ entries (`claude-opus-4`).
 **Consequences.**
 - Prices ship as **2026 placeholder estimates** and are explicitly labelled estimates in
   the dashboard. Admins override via the `aiut_pricing` option (REST `PUT /pricing`) and/or
-  the `wp_ai_rate_limiter_pricing` filter; defaults are always re-merged at read time so a
+  the `wp_aiut_pricing` filter; defaults are always re-merged at read time so a
   partial override can't delete the `__default__/__default__` safety net.
 - A `cost` limit's `threshold` is in **micros**, matching `est_cost_micros` in the
   counters. Keep units aligned if you add limit types.
@@ -256,17 +256,17 @@ entries (`claude-opus-4`).
 
 **Decision.** PHP classes live in `class-{lowercase-hyphenated}.php` files matching the WP
 convention, resolved by a custom autoloader in `wp-ai-rate-limiter.php`
-(`wp_ai_rate_limiter_autoload`). Tables are `{$wpdb->prefix}aiut_{name}` — the helper
-`wp_ai_rate_limiter_table()` appends `aiut_` (single underscore), since `$wpdb->prefix`
+(`wp_aiut_autoload`). Tables are `{$wpdb->prefix}aiut_{name}` — the helper
+`wp_aiut_table()` appends `aiut_` (single underscore), since `$wpdb->prefix`
 already ends in `_`.
 
 **Context.** Two naming surfaces: PSR-style class names need a WP-convention file mapping;
 and the table prefix helper originally double-appended an underscore.
 
 **Why.**
-- Autoloader: it strips the `WP_AI_Rate_Limiter\` namespace prefix, maps sub-namespaces to
+- Autoloader: it strips the `WP_AIUT\` namespace prefix, maps sub-namespaces to
   directories, lowercases + hyphenates the class name, and prepends `class-`. So
-  `\WP_AI_Rate_Limiter\Capture\Gatekeeper` → `src/Capture/class-gatekeeper.php`. **Keep the
+  `\WP_AIUT\Capture\Gatekeeper` → `src/Capture/class-gatekeeper.php`. **Keep the
   file name and class name in sync when you add a class** or the autoloader silently won't
   find it (`is_readable()` guard just returns).
 - Table prefix: the helper builds `wp_aiut_events` (correct). **Caveat for the takeover:**
@@ -320,14 +320,14 @@ pattern for plugins with their own tables.
 
 **Decision (a) — api-fetch uses the FULL namespaced path; no `createRootURLMiddleware`.**
 Every dashboard call passes the complete path, e.g. `apiFetch( { path:
-'wp-ai-rate-limiter/v1/totals' } )` (`assets/src/App.js`, `assets/src/Limits.js`). We do
+'wp-aiut/v1/totals' } )` (`assets/src/App.js`, `assets/src/Limits.js`). We do
 **not** install `createRootURLMiddleware`.
 
 - **Why.** WordPress's own `@wordpress/api-fetch` already installs a default root-URL
   middleware (`/wp-json/`) that **wins** over a custom-namespace root, stripping the
   namespace and producing 404s ("No route was found"). This actually shipped as a bug and
   was fixed by dropping the custom root middleware and prefixing every call with the full
-  `wp-ai-rate-limiter/v1` namespace. We still install the nonce middleware
+  `wp-aiut/v1` namespace. We still install the nonce middleware
   (`createNonceMiddleware`) from `window.wpAiUsageTracker.nonce`.
 - **Don't regress to:** `createRootURLMiddleware( config.restRoot )` + bare paths. The
   default `/wp-json/` middleware will silently override it.

@@ -2,13 +2,13 @@
 /**
  * Usage recorder: persist one event and fan out to scope counters.
  *
- * @package WP_AI_Rate_Limiter
+ * @package WP_AIUT
  */
 
-namespace WP_AI_Rate_Limiter\Accounting;
+namespace WP_AIUT\Accounting;
 
-use WP_AI_Rate_Limiter\Data\Schema;
-use WP_AI_Rate_Limiter\Periods\Window;
+use WP_AIUT\Data\Schema;
+use WP_AIUT\Periods\Window;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -43,7 +43,7 @@ class Usage_Recorder {
 
 		// Estimate cost in integer micros (guarded — collaborator owned elsewhere).
 		$cost_micros = 0;
-		if ( class_exists( '\\WP_AI_Rate_Limiter\\Accounting\\Cost_Calculator' ) ) {
+		if ( class_exists( '\\WP_AIUT\\Accounting\\Cost_Calculator' ) ) {
 			$cost_micros = (int) Cost_Calculator::cost_micros(
 				$data['provider'],
 				$data['model'],
@@ -89,8 +89,8 @@ class Usage_Recorder {
 		);
 
 		// 2) Fan out to the hot counters across both period kinds.
-		if ( class_exists( '\\WP_AI_Rate_Limiter\\Accounting\\Counter_Store' )
-			&& class_exists( '\\WP_AI_Rate_Limiter\\Periods\\Window' ) ) {
+		if ( class_exists( '\\WP_AIUT\\Accounting\\Counter_Store' )
+			&& class_exists( '\\WP_AIUT\\Periods\\Window' ) ) {
 
 			$deltas = [
 				'requests'        => 1,
@@ -126,7 +126,7 @@ class Usage_Recorder {
 			 * @param array<string,mixed>          $data   The recorded (sanitised) event row.
 			 * @param array<int,array<int,mixed>>  $scopes The scope tuples that were incremented.
 			 */
-			do_action( 'wp_ai_rate_limiter_usage_recorded', $data, $scopes );
+			do_action( 'wp_aiut_usage_recorded', $data, $scopes );
 		}
 
 		return false !== $inserted;

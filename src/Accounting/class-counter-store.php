@@ -2,12 +2,12 @@
 /**
  * Atomic counter store for pre-aggregated usage (the hot path).
  *
- * @package WP_AI_Rate_Limiter
+ * @package WP_AIUT
  */
 
-namespace WP_AI_Rate_Limiter\Accounting;
+namespace WP_AIUT\Accounting;
 
-use WP_AI_Rate_Limiter\Data\Schema;
+use WP_AIUT\Data\Schema;
 
 defined( 'ABSPATH' ) || exit;
 

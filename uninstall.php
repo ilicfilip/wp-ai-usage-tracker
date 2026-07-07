@@ -6,7 +6,7 @@
  * via the 'aiut_delete_on_uninstall' option. Default behaviour is to keep all
  * data so an accidental delete-and-reinstall does not lose usage history.
  *
- * @package WP_AI_Rate_Limiter
+ * @package WP_AIUT
  */
 
 // Bail unless WordPress is genuinely uninstalling this plugin.
@@ -21,7 +21,7 @@ if ( ! get_option( 'aiut_delete_on_uninstall' ) ) {
 
 global $wpdb;
 
-// Mirror the naming used by wp_ai_rate_limiter_table(): {prefix}aiut_{name}.
+// Mirror the naming used by wp_aiut_table(): {prefix}aiut_{name}.
 $aiut_events   = $wpdb->prefix . 'aiut_events';
 $aiut_counters = $wpdb->prefix . 'aiut_counters';
 

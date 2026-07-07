@@ -2,10 +2,10 @@
 /**
  * Admin settings page: Tools -> AI Usage.
  *
- * @package WP_AI_Rate_Limiter
+ * @package WP_AIUT
  */
 
-namespace WP_AI_Rate_Limiter\Admin;
+namespace WP_AIUT\Admin;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -17,7 +17,7 @@ defined( 'ABSPATH' ) || exit;
  * enqueue_assets() loads the @wordpress/scripts build (build/index.js +
  * build/index.asset.php deps + build/style-index.css). A small config object carrying
  * the REST root and a 'wp_rest' nonce is handed to the bundle via an inline
- * script so the dashboard can talk to the 'wp-ai-rate-limiter/v1' namespace.
+ * script so the dashboard can talk to the 'wp-aiut/v1' namespace.
  *
  * Assets only load on our own screen — never site-wide.
  */
@@ -36,7 +36,7 @@ class Settings_Page {
 	/**
 	 * Script/style handle for the compiled dashboard bundle.
 	 */
-	const ASSET_HANDLE = 'wp-ai-rate-limiter-dashboard';
+	const ASSET_HANDLE = 'wp-aiut-dashboard';
 
 	/**
 	 * The hook suffix returned by add_submenu_page(), used to gate enqueues.
@@ -68,8 +68,8 @@ class Settings_Page {
 	public function add_menu() {
 		$this->hook_suffix = add_submenu_page(
 			'tools.php',
-			__( 'AI Usage', 'wp-ai-rate-limiter' ),
-			__( 'AI Usage', 'wp-ai-rate-limiter' ),
+			__( 'AI Usage', 'wp-aiut' ),
+			__( 'AI Usage', 'wp-aiut' ),
 			self::CAPABILITY,
 			self::PAGE_SLUG,
 			[ $this, 'render' ]
@@ -91,7 +91,7 @@ class Settings_Page {
 
 		printf(
 			'<div class="wrap"><h1>%s</h1><div id="wp-aiut-root"></div></div>',
-			esc_html__( 'AI Usage', 'wp-ai-rate-limiter' )
+			esc_html__( 'AI Usage', 'wp-aiut' )
 		);
 	}
 
@@ -112,8 +112,8 @@ class Settings_Page {
 			return;
 		}
 
-		$build_dir = WP_AI_RATE_LIMITER_PLUGIN_DIR . 'build/';
-		$build_url = WP_AI_RATE_LIMITER_PLUGIN_URL . 'build/';
+		$build_dir = WP_AIUT_PLUGIN_DIR . 'build/';
+		$build_url = WP_AIUT_PLUGIN_URL . 'build/';
 
 		$script_path = $build_dir . 'index.js';
 		$asset_path  = $build_dir . 'index.asset.php';
@@ -129,7 +129,7 @@ class Settings_Page {
 		// Pull deps + version from the generated manifest when present.
 		$asset = [
 			'dependencies' => [ 'wp-element', 'wp-components', 'wp-api-fetch', 'wp-i18n', 'wp-dom-ready' ],
-			'version'      => WP_AI_RATE_LIMITER_VERSION,
+			'version'      => WP_AIUT_VERSION,
 		];
 
 		if ( file_exists( $asset_path ) ) {
@@ -157,10 +157,10 @@ class Settings_Page {
 		}
 
 		$config = [
-			'restRoot'  => esc_url_raw( rest_url( 'wp-ai-rate-limiter/v1/' ) ),
+			'restRoot'  => esc_url_raw( rest_url( 'wp-aiut/v1/' ) ),
 			'nonce'     => wp_create_nonce( 'wp_rest' ),
 			'currency'  => 'USD',
-			'attribute' => 'wp_ai_rate_limiter_attribute',
+			'attribute' => 'wp_aiut_attribute',
 		];
 
 		// Hand the config to the bundle before it runs.
@@ -172,7 +172,7 @@ class Settings_Page {
 
 		// Allow translated strings inside the JS bundle.
 		if ( function_exists( 'wp_set_script_translations' ) ) {
-			wp_set_script_translations( self::ASSET_HANDLE, 'wp-ai-rate-limiter' );
+			wp_set_script_translations( self::ASSET_HANDLE, 'wp-aiut' );
 		}
 	}
 
@@ -184,7 +184,7 @@ class Settings_Page {
 	public function render_missing_build_notice() {
 		printf(
 			'<div class="notice notice-warning"><p>%s</p></div>',
-			esc_html__( 'AI Usage Tracker: the dashboard assets have not been built yet. Run "npm install && npm run build" in the plugin directory.', 'wp-ai-rate-limiter' )
+			esc_html__( 'AI Usage Tracker: the dashboard assets have not been built yet. Run "npm install && npm run build" in the plugin directory.', 'wp-aiut' )
 		);
 	}
 }

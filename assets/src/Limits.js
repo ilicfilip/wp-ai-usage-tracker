@@ -2,7 +2,7 @@
  * Limits management section (Phase 2).
  *
  * Lists configured usage limits and lets an admin create/edit/delete them via
- * the 'wp-ai-rate-limiter/v1/limits' REST routes. Kept in its own module to
+ * the 'wp-aiut/v1/limits' REST routes. Kept in its own module to
  * keep the dashboard component readable.
  *
  * @package
@@ -26,37 +26,37 @@ import {
 } from '@wordpress/components';
 
 const SCOPE_TYPES = [
-	{ label: __( 'Plugin', 'wp-ai-rate-limiter' ), value: 'plugin' },
-	{ label: __( 'User', 'wp-ai-rate-limiter' ), value: 'user' },
-	{ label: __( 'Role', 'wp-ai-rate-limiter' ), value: 'role' },
-	{ label: __( 'Model', 'wp-ai-rate-limiter' ), value: 'model' },
-	{ label: __( 'Global (all)', 'wp-ai-rate-limiter' ), value: 'global' },
+	{ label: __( 'Plugin', 'wp-aiut' ), value: 'plugin' },
+	{ label: __( 'User', 'wp-aiut' ), value: 'user' },
+	{ label: __( 'Role', 'wp-aiut' ), value: 'role' },
+	{ label: __( 'Model', 'wp-aiut' ), value: 'model' },
+	{ label: __( 'Global (all)', 'wp-aiut' ), value: 'global' },
 ];
 
 const LIMIT_TYPES = [
-	{ label: __( 'Cost (USD)', 'wp-ai-rate-limiter' ), value: 'cost' },
-	{ label: __( 'Tokens', 'wp-ai-rate-limiter' ), value: 'tokens' },
-	{ label: __( 'Requests', 'wp-ai-rate-limiter' ), value: 'requests' },
+	{ label: __( 'Cost (USD)', 'wp-aiut' ), value: 'cost' },
+	{ label: __( 'Tokens', 'wp-aiut' ), value: 'tokens' },
+	{ label: __( 'Requests', 'wp-aiut' ), value: 'requests' },
 ];
 
 const PERIODS = [
-	{ label: __( 'Per month', 'wp-ai-rate-limiter' ), value: 'month' },
-	{ label: __( 'Per day', 'wp-ai-rate-limiter' ), value: 'day' },
+	{ label: __( 'Per month', 'wp-aiut' ), value: 'month' },
+	{ label: __( 'Per day', 'wp-aiut' ), value: 'day' },
 ];
 
 const ENFORCEMENTS = [
-	{ label: __( 'Off (track only)', 'wp-ai-rate-limiter' ), value: 'off' },
-	{ label: __( 'Soft (alert)', 'wp-ai-rate-limiter' ), value: 'soft' },
-	{ label: __( 'Hard (block)', 'wp-ai-rate-limiter' ), value: 'hard' },
+	{ label: __( 'Off (track only)', 'wp-aiut' ), value: 'off' },
+	{ label: __( 'Soft (alert)', 'wp-aiut' ), value: 'soft' },
+	{ label: __( 'Hard (block)', 'wp-aiut' ), value: 'hard' },
 ];
 
 const CONFIDENCES = [
 	{
-		label: __( 'Medium — backtrace or better', 'wp-ai-rate-limiter' ),
+		label: __( 'Medium — backtrace or better', 'wp-aiut' ),
 		value: 'medium',
 	},
 	{
-		label: __( 'High — self-identified only', 'wp-ai-rate-limiter' ),
+		label: __( 'High — self-identified only', 'wp-aiut' ),
 		value: 'high',
 	},
 ];
@@ -151,13 +151,13 @@ export default function Limits() {
 		setError( '' );
 		try {
 			const res = await apiFetch( {
-				path: 'wp-ai-rate-limiter/v1/limits',
+				path: 'wp-aiut/v1/limits',
 			} );
 			setLimits( ( res && res.limits ) || [] );
 		} catch ( e ) {
 			setError(
 				e.message ||
-					__( 'Failed to load limits.', 'wp-ai-rate-limiter' )
+					__( 'Failed to load limits.', 'wp-aiut' )
 			);
 		} finally {
 			setLoading( false );
@@ -192,8 +192,8 @@ export default function Limits() {
 			const isUpdate = !! editing.id;
 			await apiFetch( {
 				path: isUpdate
-					? `wp-ai-rate-limiter/v1/limits/${ editing.id }`
-					: 'wp-ai-rate-limiter/v1/limits',
+					? `wp-aiut/v1/limits/${ editing.id }`
+					: 'wp-aiut/v1/limits',
 				method: isUpdate ? 'PUT' : 'POST',
 				data: payload,
 			} );
@@ -202,7 +202,7 @@ export default function Limits() {
 		} catch ( e ) {
 			setError(
 				e.message ||
-					__( 'Failed to save the limit.', 'wp-ai-rate-limiter' )
+					__( 'Failed to save the limit.', 'wp-aiut' )
 			);
 		} finally {
 			setSaving( false );
@@ -212,7 +212,7 @@ export default function Limits() {
 	const remove = async ( id ) => {
 		// eslint-disable-next-line no-alert
 		const confirmed = window.confirm(
-			__( 'Delete this limit?', 'wp-ai-rate-limiter' )
+			__( 'Delete this limit?', 'wp-aiut' )
 		);
 		if ( ! confirmed ) {
 			return;
@@ -220,14 +220,14 @@ export default function Limits() {
 		setError( '' );
 		try {
 			await apiFetch( {
-				path: `wp-ai-rate-limiter/v1/limits/${ id }`,
+				path: `wp-aiut/v1/limits/${ id }`,
 				method: 'DELETE',
 			} );
 			await load();
 		} catch ( e ) {
 			setError(
 				e.message ||
-					__( 'Failed to delete the limit.', 'wp-ai-rate-limiter' )
+					__( 'Failed to delete the limit.', 'wp-aiut' )
 			);
 		}
 	};
@@ -239,14 +239,14 @@ export default function Limits() {
 		<section className="wp-aiut-section">
 			<Card className="wp-aiut-card">
 				<CardHeader>
-					<strong>{ __( 'Limits', 'wp-ai-rate-limiter' ) }</strong>
+					<strong>{ __( 'Limits', 'wp-aiut' ) }</strong>
 					{ ! editing && (
 						<Button
 							variant="primary"
 							__next40pxDefaultSize
 							onClick={ startCreate }
 						>
-							{ __( 'Add limit', 'wp-ai-rate-limiter' ) }
+							{ __( 'Add limit', 'wp-aiut' ) }
 						</Button>
 					) }
 				</CardHeader>
@@ -277,7 +277,7 @@ export default function Limits() {
 						<p className="wp-aiut-muted">
 							{ __(
 								'No limits configured. Add one to start capping usage. Until a hard limit exists, the plugin only tracks — it never blocks.',
-								'wp-ai-rate-limiter'
+								'wp-aiut'
 							) }
 						</p>
 					) : null }
@@ -309,11 +309,11 @@ function LimitsTable( { limits, onEdit, onDelete } ) {
 		<table className="wp-aiut-table widefat striped">
 			<thead>
 				<tr>
-					<th>{ __( 'Scope', 'wp-ai-rate-limiter' ) }</th>
-					<th>{ __( 'Limit', 'wp-ai-rate-limiter' ) }</th>
-					<th>{ __( 'Period', 'wp-ai-rate-limiter' ) }</th>
-					<th>{ __( 'Mode', 'wp-ai-rate-limiter' ) }</th>
-					<th>{ __( 'Status', 'wp-ai-rate-limiter' ) }</th>
+					<th>{ __( 'Scope', 'wp-aiut' ) }</th>
+					<th>{ __( 'Limit', 'wp-aiut' ) }</th>
+					<th>{ __( 'Period', 'wp-aiut' ) }</th>
+					<th>{ __( 'Mode', 'wp-aiut' ) }</th>
+					<th>{ __( 'Status', 'wp-aiut' ) }</th>
 					<th />
 				</tr>
 			</thead>
@@ -326,7 +326,7 @@ function LimitsTable( { limits, onEdit, onDelete } ) {
 							</span>
 							<span className="wp-aiut-scope-key">
 								{ l.scope_key === '*'
-									? __( 'all', 'wp-ai-rate-limiter' )
+									? __( 'all', 'wp-aiut' )
 									: l.scope_key }
 							</span>
 						</td>
@@ -353,8 +353,8 @@ function LimitsTable( { limits, onEdit, onDelete } ) {
 								}` }
 							>
 								{ l.enabled
-									? __( 'Enabled', 'wp-ai-rate-limiter' )
-									: __( 'Disabled', 'wp-ai-rate-limiter' ) }
+									? __( 'Enabled', 'wp-aiut' )
+									: __( 'Disabled', 'wp-aiut' ) }
 							</span>
 						</td>
 						<td className="wp-aiut-row-actions">
@@ -363,7 +363,7 @@ function LimitsTable( { limits, onEdit, onDelete } ) {
 								size="small"
 								onClick={ () => onEdit( l ) }
 							>
-								{ __( 'Edit', 'wp-ai-rate-limiter' ) }
+								{ __( 'Edit', 'wp-aiut' ) }
 							</Button>
 							<Button
 								variant="tertiary"
@@ -371,7 +371,7 @@ function LimitsTable( { limits, onEdit, onDelete } ) {
 								isDestructive
 								onClick={ () => onDelete( l.id ) }
 							>
-								{ __( 'Delete', 'wp-ai-rate-limiter' ) }
+								{ __( 'Delete', 'wp-aiut' ) }
 							</Button>
 						</td>
 					</tr>
@@ -396,8 +396,8 @@ function LimitForm( { draft, set, onSave, onCancel, saving } ) {
 	const isHard = draft.enforcement === 'hard';
 	const thresholdLabel =
 		draft.limit_type === 'cost'
-			? __( 'Threshold (USD)', 'wp-ai-rate-limiter' )
-			: __( 'Threshold', 'wp-ai-rate-limiter' );
+			? __( 'Threshold (USD)', 'wp-aiut' )
+			: __( 'Threshold', 'wp-aiut' );
 
 	return (
 		<div className="wp-aiut-limit-form">
@@ -406,7 +406,7 @@ function LimitForm( { draft, set, onSave, onCancel, saving } ) {
 					<SelectControl
 						__next40pxDefaultSize
 						__nextHasNoMarginBottom
-						label={ __( 'Scope type', 'wp-ai-rate-limiter' ) }
+						label={ __( 'Scope type', 'wp-aiut' ) }
 						value={ draft.scope_type }
 						options={ SCOPE_TYPES }
 						onChange={ set( 'scope_type' ) }
@@ -416,10 +416,10 @@ function LimitForm( { draft, set, onSave, onCancel, saving } ) {
 					<TextControl
 						__next40pxDefaultSize
 						__nextHasNoMarginBottom
-						label={ __( 'Scope key', 'wp-ai-rate-limiter' ) }
+						label={ __( 'Scope key', 'wp-aiut' ) }
 						help={ __(
 							'Slug / user ID / role, or * for all.',
-							'wp-ai-rate-limiter'
+							'wp-aiut'
 						) }
 						value={ draft.scope_key }
 						onChange={ set( 'scope_key' ) }
@@ -429,7 +429,7 @@ function LimitForm( { draft, set, onSave, onCancel, saving } ) {
 					<SelectControl
 						__next40pxDefaultSize
 						__nextHasNoMarginBottom
-						label={ __( 'Meter', 'wp-ai-rate-limiter' ) }
+						label={ __( 'Meter', 'wp-aiut' ) }
 						value={ draft.limit_type }
 						options={ LIMIT_TYPES }
 						onChange={ set( 'limit_type' ) }
@@ -449,7 +449,7 @@ function LimitForm( { draft, set, onSave, onCancel, saving } ) {
 					<SelectControl
 						__next40pxDefaultSize
 						__nextHasNoMarginBottom
-						label={ __( 'Period', 'wp-ai-rate-limiter' ) }
+						label={ __( 'Period', 'wp-aiut' ) }
 						value={ draft.period_kind }
 						options={ PERIODS }
 						onChange={ set( 'period_kind' ) }
@@ -459,7 +459,7 @@ function LimitForm( { draft, set, onSave, onCancel, saving } ) {
 					<SelectControl
 						__next40pxDefaultSize
 						__nextHasNoMarginBottom
-						label={ __( 'Enforcement', 'wp-ai-rate-limiter' ) }
+						label={ __( 'Enforcement', 'wp-aiut' ) }
 						value={ draft.enforcement }
 						options={ ENFORCEMENTS }
 						onChange={ set( 'enforcement' ) }
@@ -472,11 +472,11 @@ function LimitForm( { draft, set, onSave, onCancel, saving } ) {
 							__nextHasNoMarginBottom
 							label={ __(
 								'Min confidence to block',
-								'wp-ai-rate-limiter'
+								'wp-aiut'
 							) }
 							help={ __(
 								'High = only block plugins that self-identify.',
-								'wp-ai-rate-limiter'
+								'wp-aiut'
 							) }
 							value={ draft.min_confidence }
 							options={ CONFIDENCES }
@@ -489,19 +489,19 @@ function LimitForm( { draft, set, onSave, onCancel, saving } ) {
 			<div className="wp-aiut-limit-form__checks">
 				<CheckboxControl
 					__nextHasNoMarginBottom
-					label={ __( 'Alert at 80%', 'wp-ai-rate-limiter' ) }
+					label={ __( 'Alert at 80%', 'wp-aiut' ) }
 					checked={ draft.alert_80 }
 					onChange={ set( 'alert_80' ) }
 				/>
 				<CheckboxControl
 					__nextHasNoMarginBottom
-					label={ __( 'Alert at 100%', 'wp-ai-rate-limiter' ) }
+					label={ __( 'Alert at 100%', 'wp-aiut' ) }
 					checked={ draft.alert_100 }
 					onChange={ set( 'alert_100' ) }
 				/>
 				<CheckboxControl
 					__nextHasNoMarginBottom
-					label={ __( 'Enabled', 'wp-ai-rate-limiter' ) }
+					label={ __( 'Enabled', 'wp-aiut' ) }
 					checked={ draft.enabled }
 					onChange={ set( 'enabled' ) }
 				/>
@@ -516,7 +516,7 @@ function LimitForm( { draft, set, onSave, onCancel, saving } ) {
 						disabled={ saving }
 						onClick={ onSave }
 					>
-						{ __( 'Save limit', 'wp-ai-rate-limiter' ) }
+						{ __( 'Save limit', 'wp-aiut' ) }
 					</Button>
 				</FlexItem>
 				<FlexItem>
@@ -525,7 +525,7 @@ function LimitForm( { draft, set, onSave, onCancel, saving } ) {
 						__next40pxDefaultSize
 						onClick={ onCancel }
 					>
-						{ __( 'Cancel', 'wp-ai-rate-limiter' ) }
+						{ __( 'Cancel', 'wp-aiut' ) }
 					</Button>
 				</FlexItem>
 			</Flex>

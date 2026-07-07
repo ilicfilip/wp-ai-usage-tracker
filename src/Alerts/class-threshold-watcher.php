@@ -2,14 +2,14 @@
 /**
  * Detects limit-threshold crossings and triggers alerts (Phase 2).
  *
- * @package WP_AI_Rate_Limiter
+ * @package WP_AIUT
  */
 
-namespace WP_AI_Rate_Limiter\Alerts;
+namespace WP_AIUT\Alerts;
 
-use WP_AI_Rate_Limiter\Limits\Limit_Repository;
-use WP_AI_Rate_Limiter\Limits\Limit_Evaluator;
-use WP_AI_Rate_Limiter\Periods\Window;
+use WP_AIUT\Limits\Limit_Repository;
+use WP_AIUT\Limits\Limit_Evaluator;
+use WP_AIUT\Periods\Window;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -19,7 +19,7 @@ defined( 'ABSPATH' ) || exit;
  *
  * Dedup is per (limit, period, threshold): a transient remembers which
  * thresholds have already fired so an alert is sent at most once per period.
- * Runs on the 'wp_ai_rate_limiter_usage_recorded' action.
+ * Runs on the 'wp_aiut_usage_recorded' action.
  */
 class Threshold_Watcher {
 
@@ -63,7 +63,7 @@ class Threshold_Watcher {
 	 * @return void
 	 */
 	public function register() {
-		add_action( 'wp_ai_rate_limiter_usage_recorded', [ $this, 'on_recorded' ], 10, 2 );
+		add_action( 'wp_aiut_usage_recorded', [ $this, 'on_recorded' ], 10, 2 );
 	}
 
 	/**

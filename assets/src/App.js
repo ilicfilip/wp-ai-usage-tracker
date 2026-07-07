@@ -8,7 +8,7 @@
  *   3. Spend per user / role with a user|role toggle.
  *   4. Usage over time: inline SVG line/area chart with a cost|tokens toggle.
  *
- * Data comes from the 'wp-ai-rate-limiter/v1' REST namespace via api-fetch.
+ * Data comes from the 'wp-aiut/v1' REST namespace via api-fetch.
  * Charts are tiny inline-SVG helpers (no chart dependency) to keep the bundle
  * small. Costs are stored as integer micros (1e-6 USD) and formatted to dollars.
  *
@@ -167,13 +167,13 @@ function confidenceFor( scopeType, scopeKey ) {
 	if ( scopeKey === UNKNOWN_SLUG ) {
 		return {
 			level: 'low',
-			label: __( 'Unattributed', 'wp-ai-rate-limiter' ),
+			label: __( 'Unattributed', 'wp-aiut' ),
 		};
 	}
 	if ( scopeType === 'user' && String( scopeKey ) === SYSTEM_USER ) {
-		return { level: 'medium', label: __( 'System', 'wp-ai-rate-limiter' ) };
+		return { level: 'medium', label: __( 'System', 'wp-aiut' ) };
 	}
-	return { level: 'high', label: __( 'Attributed', 'wp-ai-rate-limiter' ) };
+	return { level: 'high', label: __( 'Attributed', 'wp-aiut' ) };
 }
 
 /**
@@ -185,14 +185,14 @@ function confidenceFor( scopeType, scopeKey ) {
  */
 function scopeLabel( scopeType, scopeKey ) {
 	if ( scopeKey === UNKNOWN_SLUG ) {
-		return __( 'Unknown / unattributed', 'wp-ai-rate-limiter' );
+		return __( 'Unknown / unattributed', 'wp-aiut' );
 	}
 	if ( scopeType === 'user' && String( scopeKey ) === SYSTEM_USER ) {
-		return __( 'System (cron / REST)', 'wp-ai-rate-limiter' );
+		return __( 'System (cron / REST)', 'wp-aiut' );
 	}
 	if ( scopeType === 'user' ) {
 		// eslint-disable-next-line @wordpress/i18n-translator-comments
-		return `${ __( 'User #', 'wp-ai-rate-limiter' ) }${ scopeKey }`;
+		return `${ __( 'User #', 'wp-aiut' ) }${ scopeKey }`;
 	}
 	return String( scopeKey );
 }
@@ -301,7 +301,7 @@ function RankedBreakdown( { scopeType, rows, nameHeader } ) {
 			<p className="wp-aiut-muted">
 				{ __(
 					'No usage recorded for this period yet.',
-					'wp-ai-rate-limiter'
+					'wp-aiut'
 				) }
 			</p>
 		);
@@ -313,15 +313,15 @@ function RankedBreakdown( { scopeType, rows, nameHeader } ) {
 				<tr>
 					<th>{ nameHeader }</th>
 					<th className="wp-aiut-num">
-						{ __( 'Requests', 'wp-ai-rate-limiter' ) }
+						{ __( 'Requests', 'wp-aiut' ) }
 					</th>
 					<th className="wp-aiut-num">
-						{ __( 'Tokens', 'wp-ai-rate-limiter' ) }
+						{ __( 'Tokens', 'wp-aiut' ) }
 					</th>
 					<th className="wp-aiut-num">
-						{ __( 'Est. cost', 'wp-ai-rate-limiter' ) }
+						{ __( 'Est. cost', 'wp-aiut' ) }
 					</th>
-					<th>{ __( 'Confidence', 'wp-ai-rate-limiter' ) }</th>
+					<th>{ __( 'Confidence', 'wp-aiut' ) }</th>
 				</tr>
 			</thead>
 			<tbody>
@@ -441,7 +441,7 @@ function TimeSeriesChart( { series, metric } ) {
 			<p className="wp-aiut-muted">
 				{ __(
 					'No data points in this range yet.',
-					'wp-ai-rate-limiter'
+					'wp-aiut'
 				) }
 			</p>
 		);
@@ -472,7 +472,7 @@ function TimeSeriesChart( { series, metric } ) {
 			className="wp-aiut-chart"
 			viewBox={ `0 0 ${ width } ${ height }` }
 			role="img"
-			aria-label={ __( 'Usage over time', 'wp-ai-rate-limiter' ) }
+			aria-label={ __( 'Usage over time', 'wp-aiut' ) }
 			preserveAspectRatio="xMidYMid meet"
 		>
 			{ /* Horizontal gridlines + y-axis value labels. */ }
@@ -561,44 +561,44 @@ function TimeSeriesChart( { series, metric } ) {
  */
 function EmptyState( { config } ) {
 	const hook =
-		( config && config.attribute ) || 'wp_ai_rate_limiter_attribute';
+		( config && config.attribute ) || 'wp_aiut_attribute';
 	return (
 		<Card className="wp-aiut-empty">
 			<CardBody>
 				<h2>
-					{ __( 'No AI usage recorded yet', 'wp-ai-rate-limiter' ) }
+					{ __( 'No AI usage recorded yet', 'wp-aiut' ) }
 				</h2>
 				<p>
 					{ __(
 						'Once a plugin or theme makes a WordPress AI Client request, it appears here attributed to the originating plugin and the current user.',
-						'wp-ai-rate-limiter'
+						'wp-aiut'
 					) }
 				</p>
-				<h3>{ __( 'How attribution works', 'wp-ai-rate-limiter' ) }</h3>
+				<h3>{ __( 'How attribution works', 'wp-aiut' ) }</h3>
 				<ul className="wp-aiut-list">
 					<li>
 						{ __(
 							'Self-identification (most reliable): a plugin announces itself before its prompt.',
-							'wp-ai-rate-limiter'
+							'wp-aiut'
 						) }
 					</li>
 					<li>
 						{ __(
 							'Backtrace mapping (medium): we map the calling file back to its plugin slug.',
-							'wp-ai-rate-limiter'
+							'wp-aiut'
 						) }
 					</li>
 					<li>
 						{ __(
 							'Unknown bucket (fallback): anything we cannot name is still tracked, never dropped.',
-							'wp-ai-rate-limiter'
+							'wp-aiut'
 						) }
 					</li>
 				</ul>
 				<Tip>
 					{ __(
 						'Good-citizen plugins can self-identify with:',
-						'wp-ai-rate-limiter'
+						'wp-aiut'
 					) }
 				</Tip>
 				<pre className="wp-aiut-code">{ `do_action( '${ hook }', 'my-plugin-slug' );` }</pre>
@@ -643,7 +643,7 @@ export default function App( { config } ) {
 
 		try {
 			const { from, to } = periodRange( period );
-			const ns = 'wp-ai-rate-limiter/v1';
+			const ns = 'wp-aiut/v1';
 			const [ totalsRes, pluginRes, peopleRes, seriesRes ] =
 				await Promise.all( [
 					apiFetch( { path: `${ ns }/totals?period=${ period }` } ),
@@ -665,7 +665,7 @@ export default function App( { config } ) {
 		} catch ( e ) {
 			setError(
 				( e && e.message ) ||
-					__( 'Failed to load usage data.', 'wp-ai-rate-limiter' )
+					__( 'Failed to load usage data.', 'wp-aiut' )
 			);
 		} finally {
 			setLoading( false );
@@ -684,8 +684,8 @@ export default function App( { config } ) {
 
 	const periodLabel =
 		period === 'day'
-			? __( 'Today', 'wp-ai-rate-limiter' )
-			: __( 'This month', 'wp-ai-rate-limiter' );
+			? __( 'Today', 'wp-aiut' )
+			: __( 'This month', 'wp-aiut' );
 
 	return (
 		<div className="wp-aiut">
@@ -700,17 +700,17 @@ export default function App( { config } ) {
 						__next40pxDefaultSize
 						hideLabelFromVision
 						isBlock
-						label={ __( 'Period', 'wp-ai-rate-limiter' ) }
+						label={ __( 'Period', 'wp-aiut' ) }
 						value={ period }
 						onChange={ ( value ) => setPeriod( value ) }
 					>
 						<ToggleGroupControlOption
 							value="month"
-							label={ __( 'This month', 'wp-ai-rate-limiter' ) }
+							label={ __( 'This month', 'wp-aiut' ) }
 						/>
 						<ToggleGroupControlOption
 							value="day"
-							label={ __( 'Today', 'wp-ai-rate-limiter' ) }
+							label={ __( 'Today', 'wp-aiut' ) }
 						/>
 					</ToggleGroupControl>
 				</FlexItem>
@@ -720,7 +720,7 @@ export default function App( { config } ) {
 						onClick={ load }
 						disabled={ loading }
 					>
-						{ __( 'Refresh', 'wp-ai-rate-limiter' ) }
+						{ __( 'Refresh', 'wp-aiut' ) }
 					</Button>
 				</FlexItem>
 			</Flex>
@@ -735,7 +735,7 @@ export default function App( { config } ) {
 				<div className="wp-aiut-loading">
 					<Spinner />
 					<span>
-						{ __( 'Loading usage…', 'wp-ai-rate-limiter' ) }
+						{ __( 'Loading usage…', 'wp-aiut' ) }
 					</span>
 				</div>
 			) : null }
@@ -753,7 +753,7 @@ export default function App( { config } ) {
 								<StatCard
 									label={ __(
 										'Estimated spend',
-										'wp-ai-rate-limiter'
+										'wp-aiut'
 									) }
 									value={ formatMoney(
 										totalRow.est_cost_micros
@@ -765,7 +765,7 @@ export default function App( { config } ) {
 								<StatCard
 									label={ __(
 										'Requests',
-										'wp-ai-rate-limiter'
+										'wp-aiut'
 									) }
 									value={ formatNumber( totalRow.requests ) }
 									hint={ periodLabel }
@@ -775,7 +775,7 @@ export default function App( { config } ) {
 								<StatCard
 									label={ __(
 										'Total tokens',
-										'wp-ai-rate-limiter'
+										'wp-aiut'
 									) }
 									value={ formatNumber(
 										totalTokens( totalRow )
@@ -784,12 +784,12 @@ export default function App( { config } ) {
 										totalRow.input_tokens
 									) } ${ __(
 										'in',
-										'wp-ai-rate-limiter'
+										'wp-aiut'
 									) } / ${ formatNumber(
 										totalRow.output_tokens
 									) } ${ __(
 										'out',
-										'wp-ai-rate-limiter'
+										'wp-aiut'
 									) }` }
 								/>
 							</FlexItem>
@@ -800,7 +800,7 @@ export default function App( { config } ) {
 								<strong>
 									{ __(
 										'Breakdown by provider & model',
-										'wp-ai-rate-limiter'
+										'wp-aiut'
 									) }
 								</strong>
 							</CardHeader>
@@ -817,13 +817,13 @@ export default function App( { config } ) {
 								<strong>
 									{ __(
 										'Spend per plugin',
-										'wp-ai-rate-limiter'
+										'wp-aiut'
 									) }
 								</strong>
 								<span className="wp-aiut-muted">
 									{ __(
 										'Ranked by estimated cost',
-										'wp-ai-rate-limiter'
+										'wp-aiut'
 									) }
 								</span>
 							</CardHeader>
@@ -833,7 +833,7 @@ export default function App( { config } ) {
 									rows={ plugins }
 									nameHeader={ __(
 										'Plugin',
-										'wp-ai-rate-limiter'
+										'wp-aiut'
 									) }
 								/>
 							</CardBody>
@@ -847,7 +847,7 @@ export default function App( { config } ) {
 								<strong>
 									{ __(
 										'Spend per person',
-										'wp-ai-rate-limiter'
+										'wp-aiut'
 									) }
 								</strong>
 								<ToggleGroupControl
@@ -857,7 +857,7 @@ export default function App( { config } ) {
 									isBlock
 									label={ __(
 										'Group by',
-										'wp-ai-rate-limiter'
+										'wp-aiut'
 									) }
 									value={ peopleScope }
 									onChange={ ( value ) =>
@@ -868,14 +868,14 @@ export default function App( { config } ) {
 										value="user"
 										label={ __(
 											'By user',
-											'wp-ai-rate-limiter'
+											'wp-aiut'
 										) }
 									/>
 									<ToggleGroupControlOption
 										value="role"
 										label={ __(
 											'By role',
-											'wp-ai-rate-limiter'
+											'wp-aiut'
 										) }
 									/>
 								</ToggleGroupControl>
@@ -886,8 +886,8 @@ export default function App( { config } ) {
 									rows={ people }
 									nameHeader={
 										peopleScope === 'user'
-											? __( 'User', 'wp-ai-rate-limiter' )
-											: __( 'Role', 'wp-ai-rate-limiter' )
+											? __( 'User', 'wp-aiut' )
+											: __( 'Role', 'wp-aiut' )
 									}
 								/>
 							</CardBody>
@@ -901,7 +901,7 @@ export default function App( { config } ) {
 								<strong>
 									{ __(
 										'Usage over time',
-										'wp-ai-rate-limiter'
+										'wp-aiut'
 									) }
 								</strong>
 								<ToggleGroupControl
@@ -911,7 +911,7 @@ export default function App( { config } ) {
 									isBlock
 									label={ __(
 										'Metric',
-										'wp-ai-rate-limiter'
+										'wp-aiut'
 									) }
 									value={ chartMetric }
 									onChange={ ( value ) =>
@@ -922,14 +922,14 @@ export default function App( { config } ) {
 										value="cost"
 										label={ __(
 											'Cost',
-											'wp-ai-rate-limiter'
+											'wp-aiut'
 										) }
 									/>
 									<ToggleGroupControlOption
 										value="tokens"
 										label={ __(
 											'Tokens',
-											'wp-ai-rate-limiter'
+											'wp-aiut'
 										) }
 									/>
 								</ToggleGroupControl>
@@ -970,7 +970,7 @@ function ProviderModelBreakdown( { totals } ) {
 			<p className="wp-aiut-muted">
 				{ __(
 					'No provider data for this period.',
-					'wp-ai-rate-limiter'
+					'wp-aiut'
 				) }
 			</p>
 		);
@@ -979,7 +979,7 @@ function ProviderModelBreakdown( { totals } ) {
 	return (
 		<div className="wp-aiut-breakdown">
 			<div>
-				<h4>{ __( 'By provider', 'wp-ai-rate-limiter' ) }</h4>
+				<h4>{ __( 'By provider', 'wp-aiut' ) }</h4>
 				<ul className="wp-aiut-kv">
 					{ byProvider.map( ( r ) => {
 						const estimated =
@@ -991,7 +991,7 @@ function ProviderModelBreakdown( { totals } ) {
 									{ r.provider ||
 										__(
 											'(unknown)',
-											'wp-ai-rate-limiter'
+											'wp-aiut'
 										) }
 								</span>
 								<span className="wp-aiut-cost">
@@ -1001,7 +1001,7 @@ function ProviderModelBreakdown( { totals } ) {
 											level="low"
 											label={ __(
 												'est.',
-												'wp-ai-rate-limiter'
+												'wp-aiut'
 											) }
 										/>
 									) : null }
@@ -1012,7 +1012,7 @@ function ProviderModelBreakdown( { totals } ) {
 				</ul>
 			</div>
 			<div>
-				<h4>{ __( 'By model', 'wp-ai-rate-limiter' ) }</h4>
+				<h4>{ __( 'By model', 'wp-aiut' ) }</h4>
 				<ul className="wp-aiut-kv">
 					{ byModel.map( ( r ) => (
 						<li key={ `${ r.provider }/${ r.model }` }>

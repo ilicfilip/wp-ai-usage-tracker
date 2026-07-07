@@ -77,7 +77,7 @@ Attribution works automatically via call-stack inspection. A plugin can make its
 right before its prompt:
 
 ```php
-do_action( 'wp_ai_rate_limiter_attribute', 'my-plugin-slug' );
+do_action( 'wp_aiut_attribute', 'my-plugin-slug' );
 $text = wp_ai_client_prompt( 'Summarize this.' )->generate_text();
 ```
 
@@ -91,7 +91,7 @@ that plugin's requests (with a `WP_Error`) once it exceeds the cap for the perio
 No native mechanism tells us which plugin made a call, so attribution is **layered**, in
 confidence order:
 
-1. **Self-ID** (`high`) — the plugin called `wp_ai_rate_limiter_attribute` (above).
+1. **Self-ID** (`high`) — the plugin called `wp_aiut_attribute` (above).
 2. **Backtrace** (`medium`) — we map the calling file to its plugin/theme slug. Works with
    **zero cooperation** — this is the default for most plugins.
 3. **Unknown** (`low`) — `__unknown__`. Still tracked, never dropped.
@@ -115,14 +115,14 @@ cost (USD) = Σ (tokens × price_per_million) ÷ 1,000,000      # per input/outp
 
 > ⚠️ **The shipped prices are estimates, not verified live rates.** Providers change pricing
 > over time and by tier/region. Override any row in the pricing table (option `aiut_pricing`)
-> or via the `wp_ai_rate_limiter_pricing` filter before relying on the absolute dollar
+> or via the `wp_aiut_pricing` filter before relying on the absolute dollar
 > figures. The UI labels figures as *estimated* for this reason.
 
 ## Extending it
 
 The plugin exposes actions and filters for integration (self-ID, block notifications,
 custom alert channels, pricing overrides, capability/recipient filters) and a REST API under
-`wp-ai-rate-limiter/v1`. Full reference: **[docs/HOOKS.md](docs/HOOKS.md)**.
+`wp-aiut/v1`. Full reference: **[docs/HOOKS.md](docs/HOOKS.md)**.
 
 ## Documentation
 
@@ -141,7 +141,7 @@ custom alert channels, pricing overrides, capability/recipient filters) and a RE
 ```
 wp-ai-rate-limiter.php     bootstrap: constants, autoloader, activation guard
 uninstall.php              drops tables/options (opt-in)
-src/                       PHP, namespace \WP_AI_Rate_Limiter\ (class-{kebab}.php)
+src/                       PHP, namespace \WP_AIUT\ (class-{kebab}.php)
   Capture/                 prevent_prompt hook, result capture, transporter decorator
   Attribution/             caller + user resolution (self-ID / backtrace / unknown)
   Accounting/              usage recorder, atomic counters, cost calculator

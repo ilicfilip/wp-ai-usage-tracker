@@ -2,12 +2,12 @@
 /**
  * Read-side repository for the dashboard.
  *
- * @package WP_AI_Rate_Limiter
+ * @package WP_AIUT
  */
 
-namespace WP_AI_Rate_Limiter\Data;
+namespace WP_AIUT\Data;
 
-use WP_AI_Rate_Limiter\Periods\Window;
+use WP_AIUT\Periods\Window;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -161,7 +161,7 @@ class Usage_Repository {
 			'est_cost_micros' => isset( $global['est_cost_micros'] ) ? (int) $global['est_cost_micros'] : 0,
 		];
 
-		$range = ( class_exists( '\\WP_AI_Rate_Limiter\\Periods\\Window' ) )
+		$range = ( class_exists( '\\WP_AIUT\\Periods\\Window' ) )
 			? Window::range( $period_kind, $period_key )
 			: null;
 

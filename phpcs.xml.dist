@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<ruleset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" name="WP_AI_Rate_Limiter project" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/squizlabs/PHP_CodeSniffer/master/phpcs.xsd">
+<ruleset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" name="WP_AIUT project" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/squizlabs/PHP_CodeSniffer/master/phpcs.xsd">
 
 	<description>A custom set of rules to check for the WP AI Rate Limiter project</description>
 
@@ -75,7 +75,7 @@
 	<rule ref="WordPress.WP.I18n">
 		<properties>
 			<property name="text_domain" type="array">
-				<element value="wp-ai-rate-limiter"/>
+				<element value="wp-aiut"/>
 			</property>
 		</properties>
 	</rule>
@@ -83,8 +83,8 @@
 	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
 		<properties>
 			<property name="prefixes" type="array">
-				<element value="WP_AI_Rate_Limiter"/>
-				<element value="wp_ai_rate_limiter"/>
+				<element value="WP_AIUT"/>
+				<element value="wp_aiut"/>
 				<element value="aiut"/>
 			</property>
 		</properties>

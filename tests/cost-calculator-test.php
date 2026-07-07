@@ -2,13 +2,13 @@
 /**
  * Tests for the Cost_Calculator.
  *
- * @package WP_AI_Rate_Limiter
+ * @package WP_AIUT
  */
 
-use WP_AI_Rate_Limiter\Accounting\Cost_Calculator;
+use WP_AIUT\Accounting\Cost_Calculator;
 
 /**
- * @covers \WP_AI_Rate_Limiter\Accounting\Cost_Calculator
+ * @covers \WP_AIUT\Accounting\Cost_Calculator
  */
 class Cost_Calculator_Test extends AIUT_TestCase {
 
@@ -97,9 +97,9 @@ class Cost_Calculator_Test extends AIUT_TestCase {
 			return $pricing;
 		};
 
-		add_filter( 'wp_ai_rate_limiter_pricing', $cb );
+		add_filter( 'wp_aiut_pricing', $cb );
 		$micros = Cost_Calculator::cost_micros( 'anthropic', 'claude-opus-4', 9999, 9999 );
-		remove_filter( 'wp_ai_rate_limiter_pricing', $cb );
+		remove_filter( 'wp_aiut_pricing', $cb );
 
 		$this->assertSame( 0, $micros );
 	}

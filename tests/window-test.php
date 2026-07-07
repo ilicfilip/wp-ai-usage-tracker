@@ -2,13 +2,13 @@
 /**
  * Tests for the timezone-aware period Window helper.
  *
- * @package WP_AI_Rate_Limiter
+ * @package WP_AIUT
  */
 
-use WP_AI_Rate_Limiter\Periods\Window;
+use WP_AIUT\Periods\Window;
 
 /**
- * @covers \WP_AI_Rate_Limiter\Periods\Window
+ * @covers \WP_AIUT\Periods\Window
  */
 class Window_Test extends AIUT_TestCase {
 

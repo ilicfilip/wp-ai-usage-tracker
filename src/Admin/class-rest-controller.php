@@ -2,15 +2,15 @@
 /**
  * REST API controller for the AI Usage dashboard.
  *
- * @package WP_AI_Rate_Limiter
+ * @package WP_AIUT
  */
 
-namespace WP_AI_Rate_Limiter\Admin;
+namespace WP_AIUT\Admin;
 
-use WP_AI_Rate_Limiter\Accounting\Cost_Calculator;
-use WP_AI_Rate_Limiter\Data\Schema;
-use WP_AI_Rate_Limiter\Data\Usage_Repository;
-use WP_AI_Rate_Limiter\Periods\Window;
+use WP_AIUT\Accounting\Cost_Calculator;
+use WP_AIUT\Data\Schema;
+use WP_AIUT\Data\Usage_Repository;
+use WP_AIUT\Periods\Window;
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Server;
@@ -18,11 +18,11 @@ use WP_REST_Server;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Registers the 'wp-ai-rate-limiter/v1' namespace and its read/write routes
+ * Registers the 'wp-aiut/v1' namespace and its read/write routes
  * (spec §6).
  *
  * All routes are guarded by a 'manage_options'-style permission callback whose
- * capability is filterable via 'wp_ai_rate_limiter_capability'. Reads delegate
+ * capability is filterable via 'wp_aiut_capability'. Reads delegate
  * to Usage_Repository; pricing delegates to Cost_Calculator. Every argument is
  * validated and sanitized; every response goes through rest_ensure_response().
  */
@@ -31,12 +31,12 @@ class Rest_Controller {
 	/**
 	 * REST namespace for all dashboard routes.
 	 */
-	const NAMESPACE = 'wp-ai-rate-limiter/v1';
+	const NAMESPACE = 'wp-aiut/v1';
 
 	/**
 	 * Filter controlling the required capability.
 	 */
-	const CAPABILITY_FILTER = 'wp_ai_rate_limiter_capability';
+	const CAPABILITY_FILTER = 'wp_aiut_capability';
 
 	/**
 	 * Hook the route registration onto rest_api_init.
@@ -136,7 +136,7 @@ class Rest_Controller {
 						'pricing' => [
 							'type'        => 'object',
 							'required'    => true,
-							'description' => __( 'Pricing table keyed by "provider/model".', 'wp-ai-rate-limiter' ),
+							'description' => __( 'Pricing table keyed by "provider/model".', 'wp-aiut' ),
 						],
 					],
 				],
@@ -222,7 +222,7 @@ class Rest_Controller {
 		$period_key = $this->resolve_period_key( $kind, $request->get_param( 'period_key' ) );
 
 		$rows = [];
-		if ( class_exists( '\\WP_AI_Rate_Limiter\\Data\\Usage_Repository' ) ) {
+		if ( class_exists( '\\WP_AIUT\\Data\\Usage_Repository' ) ) {
 			$rows = Usage_Repository::ranked_by_scope( $scope_type, $kind, $period_key );
 		}
 
@@ -341,7 +341,7 @@ class Rest_Controller {
 		}
 
 		$series = [];
-		if ( class_exists( '\\WP_AI_Rate_Limiter\\Data\\Usage_Repository' ) ) {
+		if ( class_exists( '\\WP_AIUT\\Data\\Usage_Repository' ) ) {
 			$series = Usage_Repository::timeseries( $metric, $from, $to, $scope_type, $scope_key );
 		}
 
@@ -371,7 +371,7 @@ class Rest_Controller {
 			'by_model'    => [],
 		];
 
-		if ( class_exists( '\\WP_AI_Rate_Limiter\\Data\\Usage_Repository' ) ) {
+		if ( class_exists( '\\WP_AIUT\\Data\\Usage_Repository' ) ) {
 			$data = Usage_Repository::totals( $kind, $period_key );
 		}
 
@@ -387,7 +387,7 @@ class Rest_Controller {
 	 * @return \WP_REST_Response
 	 */
 	public function get_pricing() {
-		$pricing = class_exists( '\\WP_AI_Rate_Limiter\\Accounting\\Cost_Calculator' )
+		$pricing = class_exists( '\\WP_AIUT\\Accounting\\Cost_Calculator' )
 			? Cost_Calculator::get_pricing()
 			: [];
 
@@ -406,15 +406,15 @@ class Rest_Controller {
 		if ( ! is_array( $pricing ) ) {
 			return new WP_Error(
 				'aiut_invalid_pricing',
-				__( 'The pricing table must be an object keyed by "provider/model".', 'wp-ai-rate-limiter' ),
+				__( 'The pricing table must be an object keyed by "provider/model".', 'wp-aiut' ),
 				[ 'status' => 400 ]
 			);
 		}
 
-		if ( ! class_exists( '\\WP_AI_Rate_Limiter\\Accounting\\Cost_Calculator' ) ) {
+		if ( ! class_exists( '\\WP_AIUT\\Accounting\\Cost_Calculator' ) ) {
 			return new WP_Error(
 				'aiut_unavailable',
-				__( 'Pricing storage is unavailable.', 'wp-ai-rate-limiter' ),
+				__( 'Pricing storage is unavailable.', 'wp-aiut' ),
 				[ 'status' => 500 ]
 			);
 		}
@@ -438,7 +438,7 @@ class Rest_Controller {
 		$plugins = [];
 		$models  = [];
 
-		if ( class_exists( '\\WP_AI_Rate_Limiter\\Data\\Schema' ) ) {
+		if ( class_exists( '\\WP_AIUT\\Data\\Schema' ) ) {
 			$counters = Schema::counters_table();
 
 			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- prepared below.
@@ -478,7 +478,7 @@ class Rest_Controller {
 	 * @return \WP_REST_Response
 	 */
 	public function get_limits() {
-		$repo = new \WP_AI_Rate_Limiter\Limits\Limit_Repository();
+		$repo = new \WP_AIUT\Limits\Limit_Repository();
 
 		return rest_ensure_response( [ 'limits' => $repo->all() ] );
 	}
@@ -490,13 +490,13 @@ class Rest_Controller {
 	 * @return \WP_REST_Response|\WP_Error
 	 */
 	public function create_limit( WP_REST_Request $request ) {
-		$repo = new \WP_AI_Rate_Limiter\Limits\Limit_Repository();
+		$repo = new \WP_AIUT\Limits\Limit_Repository();
 		$id   = $repo->save( $this->limit_payload( $request ) );
 
 		if ( false === $id ) {
 			return new \WP_Error(
 				'aiut_limit_save_failed',
-				__( 'Could not save the limit.', 'wp-ai-rate-limiter' ),
+				__( 'Could not save the limit.', 'wp-aiut' ),
 				[ 'status' => 500 ]
 			);
 		}
@@ -511,13 +511,13 @@ class Rest_Controller {
 	 * @return \WP_REST_Response|\WP_Error
 	 */
 	public function update_limit( WP_REST_Request $request ) {
-		$repo = new \WP_AI_Rate_Limiter\Limits\Limit_Repository();
+		$repo = new \WP_AIUT\Limits\Limit_Repository();
 		$id   = (int) $request['id'];
 
 		if ( null === $repo->find( $id ) ) {
 			return new \WP_Error(
 				'aiut_limit_not_found',
-				__( 'Limit not found.', 'wp-ai-rate-limiter' ),
+				__( 'Limit not found.', 'wp-aiut' ),
 				[ 'status' => 404 ]
 			);
 		}
@@ -529,7 +529,7 @@ class Rest_Controller {
 		if ( false === $saved ) {
 			return new \WP_Error(
 				'aiut_limit_save_failed',
-				__( 'Could not update the limit.', 'wp-ai-rate-limiter' ),
+				__( 'Could not update the limit.', 'wp-aiut' ),
 				[ 'status' => 500 ]
 			);
 		}
@@ -544,7 +544,7 @@ class Rest_Controller {
 	 * @return \WP_REST_Response
 	 */
 	public function delete_limit( WP_REST_Request $request ) {
-		$repo = new \WP_AI_Rate_Limiter\Limits\Limit_Repository();
+		$repo = new \WP_AIUT\Limits\Limit_Repository();
 		$ok   = $repo->delete( (int) $request['id'] );
 
 		return rest_ensure_response( [ 'deleted' => $ok ] );

@@ -2,17 +2,17 @@
 /**
  * Tests for the Enforcer block decision (incl. fail-open guarantee).
  *
- * @package WP_AI_Rate_Limiter
+ * @package WP_AIUT
  */
 
-use WP_AI_Rate_Limiter\Enforcement\Enforcer;
-use WP_AI_Rate_Limiter\Limits\Limit_Repository;
-use WP_AI_Rate_Limiter\Limits\Limit_Evaluator;
-use WP_AI_Rate_Limiter\Accounting\Counter_Store;
-use WP_AI_Rate_Limiter\Periods\Window;
+use WP_AIUT\Enforcement\Enforcer;
+use WP_AIUT\Limits\Limit_Repository;
+use WP_AIUT\Limits\Limit_Evaluator;
+use WP_AIUT\Accounting\Counter_Store;
+use WP_AIUT\Periods\Window;
 
 /**
- * @covers \WP_AI_Rate_Limiter\Enforcement\Enforcer
+ * @covers \WP_AIUT\Enforcement\Enforcer
  */
 class Enforcer_Test extends AIUT_TestCase {
 
@@ -53,12 +53,12 @@ class Enforcer_Test extends AIUT_TestCase {
 		$cb    = static function () use ( &$fired ) {
 			++$fired;
 		};
-		add_action( 'wp_ai_rate_limiter_blocked', $cb );
+		add_action( 'wp_aiut_blocked', $cb );
 
 		$enforcer = new Enforcer( $this->repo );
 		$blocked  = $enforcer->should_block( [ 'plugin' => 'acme' ], 'high' );
 
-		remove_action( 'wp_ai_rate_limiter_blocked', $cb );
+		remove_action( 'wp_aiut_blocked', $cb );
 
 		$this->assertTrue( $blocked );
 		$this->assertSame( 1, $fired );

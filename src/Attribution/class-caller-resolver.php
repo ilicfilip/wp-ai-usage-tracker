@@ -2,10 +2,10 @@
 /**
  * Caller (plugin/theme) and user attribution resolver.
  *
- * @package WP_AI_Rate_Limiter
+ * @package WP_AIUT
  */
 
-namespace WP_AI_Rate_Limiter\Attribution;
+namespace WP_AIUT\Attribution;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -14,7 +14,7 @@ defined( 'ABSPATH' ) || exit;
  *
  * Layered, most-reliable first (spec §4 / Architecture §5):
  *   1. Self-ID hook  (high)   — cooperating plugins call
- *                               do_action( 'wp_ai_rate_limiter_attribute', 'slug' )
+ *                               do_action( 'wp_aiut_attribute', 'slug' )
  *                               before their prompt; we read the top of a
  *                               request-scoped stack.
  *   2. Backtrace     (medium) — walk debug_backtrace() and map the first frame
@@ -30,7 +30,7 @@ class Caller_Resolver {
 	/**
 	 * Attribution action other plugins call to self-identify.
 	 */
-	const ATTRIBUTE_ACTION = 'wp_ai_rate_limiter_attribute';
+	const ATTRIBUTE_ACTION = 'wp_aiut_attribute';
 
 	/**
 	 * Slug used when no caller can be resolved.
@@ -77,7 +77,7 @@ class Caller_Resolver {
 	/**
 	 * Register the self-ID action listener.
 	 *
-	 * Cooperating plugins fire do_action( 'wp_ai_rate_limiter_attribute', 'slug' )
+	 * Cooperating plugins fire do_action( 'wp_aiut_attribute', 'slug' )
 	 * immediately before their prompt; we push the slug onto the stack. The
 	 * Gatekeeper pops/reads it when the prompt fires. Idempotent.
 	 *
@@ -230,7 +230,7 @@ class Caller_Resolver {
 
 		$plugins_dir = $this->normalize_path( $this->plugins_base_dir() );
 		$themes_dir  = $this->normalize_path( $this->themes_base_dir() );
-		$own_dir     = $this->normalize_path( WP_AI_RATE_LIMITER_PLUGIN_DIR );
+		$own_dir     = $this->normalize_path( WP_AIUT_PLUGIN_DIR );
 		$core_dir    = $this->normalize_path( ABSPATH . WPINC );
 
 		foreach ( $frames as $frame ) {

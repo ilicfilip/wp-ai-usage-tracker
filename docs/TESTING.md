@@ -25,7 +25,7 @@ The PHP runtime targets **PHP 7.4+** (Composer pins the *platform* to 8.3 so the
 lockfile resolves consistently — see `composer.json` `config.platform.php`). The
 plugin itself only boots on **WordPress >= 7.0 with the AI Client present**
 (`wp_ai_client_prompt()` must exist); otherwise it stays dormant — see
-`wp_ai_rate_limiter_environment_ok()` in `wp-ai-rate-limiter.php`.
+`wp_aiut_environment_ok()` in `wp-ai-rate-limiter.php`.
 
 ---
 
@@ -113,9 +113,9 @@ do not "fix" them by renaming public API or fighting the sniffer:
 
 | File:line | Warning | Why it's acceptable |
 | --- | --- | --- |
-| `wp-ai-rate-limiter.php:69` | Reserved keyword `class` used as param name (`function wp_ai_rate_limiter_autoload( $class )`) | `$class` is the conventional SPL autoloader parameter name; renaming it would make the autoloader read worse than every other WP autoloader. |
+| `wp-ai-rate-limiter.php:69` | Reserved keyword `class` used as param name (`function wp_aiut_autoload( $class )`) | `$class` is the conventional SPL autoloader parameter name; renaming it would make the autoloader read worse than every other WP autoloader. |
 | `src/Limits/class-limit-repository.php:214` | Reserved keyword `default` used as param name | A tiny local enum-sanitiser closure `($value, $allowed, $default)`. `$default` is the clearest possible name for a fallback value; the closure is private. |
-| `src/Accounting/class-cost-calculator.php:129` | Dynamic hook name doesn't start with plugin prefix (`apply_filters( self::PRICING_FILTER, ... )`) | The hook **is** prefixed — the *value* of the `PRICING_FILTER` constant is `wp_ai_rate_limiter_pricing`. The sniff can't resolve the constant statically, so it false-positives. |
+| `src/Accounting/class-cost-calculator.php:129` | Dynamic hook name doesn't start with plugin prefix (`apply_filters( self::PRICING_FILTER, ... )`) | The hook **is** prefixed — the *value* of the `PRICING_FILTER` constant is `wp_aiut_pricing`. The sniff can't resolve the constant statically, so it false-positives. |
 | `src/Admin/class-rest-controller.php:208` | Dynamic hook name doesn't start with plugin prefix (`self::CAPABILITY_FILTER`) | Same false positive: the constant's value is correctly plugin-prefixed; PHPCS just can't see through the `self::` constant reference. |
 
 If you see **more** than these 4 warnings, or **any** error, you have
@@ -141,7 +141,7 @@ casually:
   `return.type`, casts, etc.) is intentionally not enforced (mirrors the
   progress-planner project's posture).
 - **`constant.notFound`** is ignored because single-file analysis can't see the
-  `WP_AI_RATE_LIMITER_*` constants defined in the main file or core runtime
+  `WP_AIUT_*` constants defined in the main file or core runtime
   constants — they are guarded/defined for real at runtime.
 - **The WordPress 7.0 AI Client + bundled `php-ai-client` SDK have no PHPStan
   stubs yet.** All access to `wp_ai_client_prompt`,
@@ -193,7 +193,7 @@ actually fire.
 
 - **Install root:** `<wordpress-root>` (Laravel Valet).
 - **Symlink:** the repo is symlinked into
-  `<wordpress-root>/wp-content/plugins/wp-ai-rate-limiter` — so edits in
+  `<wordpress-root>/wp-content/plugins/wp-aiut` — so edits in
   `<plugin-root>` are live immediately; no copy step.
   (`build/` must still be rebuilt for UI changes.)
 - **URL:** http://your-site.test
@@ -202,7 +202,7 @@ actually fire.
 
 > The plugin only boots when `wp_ai_client_prompt()` exists (core 7.0 AI Client).
 > If activation is refused, you'll get the self-deactivation notice from
-> `wp_ai_rate_limiter_activation_notice()` — that means the AI Client isn't
+> `wp_aiut_activation_notice()` — that means the AI Client isn't
 > available in that install.
 
 ### WP-CLI is the primary test harness
@@ -217,7 +217,7 @@ Two workhorses:
 
 - **`wp eval '<php>'`** — boots WordPress and runs PHP in-process. This is how we
   invoke the plugin's classes directly (autoloader is registered on load, so
-  `\WP_AI_Rate_Limiter\...` resolves).
+  `\WP_AIUT\...` resolves).
 - **`wp db query '<sql>'`** — inspect the custom tables directly.
 
 Confirm the tables exist (note `wp_` prefix + `aiut_` → `wp_aiut_*`):
@@ -254,7 +254,7 @@ Key facts that make this free:
 - **Usage is recorded by `Usage_Recorder::record( array $row )`** — a plain
   static method. Call it directly to seed synthetic events + counters; no model
   involved.
-- **Alerts fire off the `wp_ai_rate_limiter_usage_recorded` action**, which
+- **Alerts fire off the `wp_aiut_usage_recorded` action**, which
   `record()` emits. So recording synthetic usage also drives the
   `Threshold_Watcher`.
 - **`wp_mail()` can be short-circuited** with the core `pre_wp_mail` filter, so
@@ -273,7 +273,7 @@ the cached fast-path flag flipped on:
 
 ```bash
 wp --path=$WP_ROOT eval '
-$repo = new \WP_AI_Rate_Limiter\Limits\Limit_Repository();
+$repo = new \WP_AIUT\Limits\Limit_Repository();
 $id = $repo->save([
   "scope_type"     => "global",
   "scope_key"      => "*",
@@ -302,7 +302,7 @@ Gatekeeper makes. Drive it directly — no prompt, no API:
 
 ```bash
 wp --path=$WP_ROOT eval '
-$enf = new \WP_AI_Rate_Limiter\Enforcement\Enforcer();
+$enf = new \WP_AIUT\Enforcement\Enforcer();
 $scopes = [
   "plugin" => "acme-ai",
   "user"   => "1",
@@ -323,8 +323,8 @@ You can also test the evaluator in isolation:
 
 ```bash
 wp --path=$WP_ROOT eval '
-$repo = new \WP_AI_Rate_Limiter\Limits\Limit_Repository();
-$ev   = new \WP_AI_Rate_Limiter\Limits\Limit_Evaluator($repo);
+$repo = new \WP_AIUT\Limits\Limit_Repository();
+$ev   = new \WP_AIUT\Limits\Limit_Evaluator($repo);
 $breach = $ev->first_hard_breach(["global" => "__all__"], "high");
 var_export($breach);   // null, or the breached limit row incl. "current" usage
 '
@@ -335,11 +335,11 @@ var_export($breach);   // null, or the breached limit row incl. "current" usage
 This writes one `wp_aiut_events` row **and** fans out to `wp_aiut_counters`
 across day + month for every scope — exactly what a real captured request would
 do. It also computes estimated cost via `Cost_Calculator` and emits the
-`wp_ai_rate_limiter_usage_recorded` action (so alerts get a chance to fire):
+`wp_aiut_usage_recorded` action (so alerts get a chance to fire):
 
 ```bash
 wp --path=$WP_ROOT eval '
-$ok = \WP_AI_Rate_Limiter\Accounting\Usage_Recorder::record([
+$ok = \WP_AIUT\Accounting\Usage_Recorder::record([
   "plugin_slug"       => "acme-ai",
   "plugin_confidence" => "high",
   "user_id"           => 1,
@@ -366,7 +366,7 @@ blocks. (Cost is a longest-prefix match: `claude-opus-4-8` resolves against the
 Install a `pre_wp_mail` short-circuit that captures the email instead of sending
 it, then record enough usage to cross 80% (or 100%) of a limit that has
 `alert_80`/`alert_100` enabled. The `Threshold_Watcher` runs on the
-`wp_ai_rate_limiter_usage_recorded` action and calls `Notifier::notify()`, which
+`wp_aiut_usage_recorded` action and calls `Notifier::notify()`, which
 calls `wp_mail()`:
 
 ```bash
@@ -379,10 +379,10 @@ add_filter("pre_wp_mail", function($null, $atts){
 }, 10, 2);
 
 // Wire the watcher for this CLI request (normally wired on init in the plugin).
-(new \WP_AI_Rate_Limiter\Alerts\Threshold_Watcher())->register();
+(new \WP_AIUT\Alerts\Threshold_Watcher())->register();
 
 // Record usage that pushes the global cost limit past its alert threshold.
-\WP_AI_Rate_Limiter\Accounting\Usage_Recorder::record([
+\WP_AIUT\Accounting\Usage_Recorder::record([
   "plugin_slug" => "acme-ai", "plugin_confidence" => "high",
   "user_id" => 1, "user_role" => "administrator",
   "provider" => "anthropic", "model" => "claude-opus-4-8",
@@ -402,8 +402,8 @@ Notes:
 - 100% is checked before 80%, so a single event crossing both fires only the
   100% alert.
 - You can also bypass email entirely and assert on the structured payload by
-  hooking the `wp_ai_rate_limiter_notify` action (fires regardless of email),
-  or redirect the recipient with the `wp_ai_rate_limiter_alert_email` filter.
+  hooking the `wp_aiut_notify` action (fires regardless of email),
+  or redirect the recipient with the `wp_aiut_alert_email` filter.
 
 ### 5.5 Resetting between runs
 
@@ -428,7 +428,7 @@ action so attribution is high-confidence, then a one-word prompt:
 
 ```bash
 wp --path=$WP_ROOT eval '
-do_action("wp_ai_rate_limiter_attribute", "smoke-test");   // high-confidence self-ID
+do_action("wp_aiut_attribute", "smoke-test");   // high-confidence self-ID
 $text = wp_ai_client_prompt("hi")->generate_text();
 echo $text . "\n";
 '
@@ -464,7 +464,7 @@ A change is done only when **all** of the following hold:
    and confirm `build/index.js`, `build/index.asset.php`, and
    `build/style-index.css` regenerated. Load **Tools → AI Usage** at
    http://your-site.test and confirm it mounts (no console errors, REST calls to
-   `wp-ai-rate-limiter/v1/*` succeed).
+   `wp-aiut/v1/*` succeed).
 3. **Observe-only invariant preserved.** Phase 1 must never block. With **no
    enabled hard limits**, `Enforcer::has_enabled_hard_limits()` is false and
    `should_block()` short-circuits to `false` — behaviour is byte-for-byte

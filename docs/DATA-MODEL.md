@@ -12,7 +12,7 @@ Read this alongside the source it describes:
 - `src/Limits/class-limit-repository.php` — limits CRUD + the cached fast-path flag.
 - `src/Periods/class-window.php` — timezone-aware period keys and ranges.
 - `wp-ai-rate-limiter.php` — `wp_aiut_table()` (the name helper).
-- `uninstall.php` — what gets dropped/deleted (and what doesn't).
+- `uninstall.php` — what gets dropped/deleted on an opt-in uninstall.
 
 ---
 
@@ -422,19 +422,24 @@ current.
 
 ---
 
-## 11. Uninstall behaviour (and a known gap)
+## 11. Uninstall behaviour
 
 `uninstall.php` runs only on a real uninstall (`WP_UNINSTALL_PLUGIN` defined) **and** only
-when `aiut_delete_on_uninstall` is truthy. When it does run it drops:
+when `aiut_delete_on_uninstall` is truthy. When it does run it drops all three tables:
 
 - `{prefix}aiut_events`
 - `{prefix}aiut_counters`
+- `{prefix}aiut_limits`
 
-and deletes the options `aiut_db_version`, `aiut_delete_on_uninstall`, `aiut_pricing`,
-`aiut_settings`.
+and deletes every option the plugin persists: `aiut_db_version`,
+`aiut_delete_on_uninstall`, `aiut_pricing`, `aiut_settings`, and `aiut_has_hard_limits`
+(the autoloaded hard-limit fast-path flag).
 
-> **Known gap for the next agent:** `uninstall.php` does **not** drop the Phase 2
-> `{prefix}aiut_limits` table, and does **not** delete the `aiut_has_hard_limits` option
-> or any `aiut_alert_*` dedup transients. On an opt-in delete these are left behind. If
-> full teardown matters, extend `uninstall.php` to drop the limits table and delete the
-> hard-flag option (transients expire on their own within 32 days).
+> **Keep in sync:** the table list and option list here mirror `Schema` and the writers.
+> When you add a table or a persisted option, extend `uninstall.php` too — a fully opted-in
+> uninstall must leave nothing behind.
+>
+> The only residue is the `aiut_alert_*` 80%/100% dedup transients
+> (`Threshold_Watcher`), which are intentionally *not* enumerated on uninstall: they are
+> `_transient_`-prefixed rows that WordPress prunes on its own and expire within 32 days
+> regardless. Not worth a full-table scan at uninstall time.

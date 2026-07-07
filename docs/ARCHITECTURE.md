@@ -73,7 +73,12 @@ exists. The SDK has no token-counting API and no metadata-attach channel.
   `wp_ai_client_after_generate_result` event and **correlates it back** to a
   pending intent — *by recency*, because the event does not echo the builder
   identity (`Gatekeeper::match_pending()` returns the newest un-finalised
-  intent, optionally filtered by slug).
+  intent, optionally filtered by slug). Two guards keep recency honest: a
+  **blocked** prompt discards its intent immediately (no result will arrive for
+  it), and intents older than a correlation window
+  (`Gatekeeper::MATCH_MAX_AGE_SECONDS`, filter `wp_aiut_match_max_age`) age out
+  so an abandoned/errored call can't steal a later, unrelated result — it's left
+  for the shutdown estimate sweep instead.
 - Because tokens arrive too late to gate *this* request, **enforcement is
   retrospective**: the Enforcer blocks the *next* request once accrued usage has
   already met a hard cap.
@@ -133,6 +138,8 @@ means a low-confidence attribution is never used to single out a plugin.
    │                 current_usage (Counter_Store) >= threshold > 0 ?           │
    │            • breach -> do_action('wp_aiut_blocked'); return true│
    │            • any \Throwable -> return false  (FAIL OPEN)                    │
+   │    6. if blocking (here or $prevent) -> mark_finalized(fingerprint):        │
+   │         the call won't run, so discard the intent (no result to match)     │
    │       return true  => core returns WP_Error('prompt_prevented', 503)       │
    │       return $prevent (usually false) => request proceeds                  │
    └──────────────────────────────────────────────────────────────────────────┘

@@ -92,9 +92,12 @@ from the DTO, `estimated = 0`. It is hooked in `class-result-capturer.php`
    above). The intent→result match is by recency, since the event doesn't echo the
    builder identity.
 2. **Attribution.** Nothing tells us which plugin made the call. Resolved by layering, in
-   confidence order: self-ID action hook (`wp_aiut_attribute`, high) →
-   `debug_backtrace` path-mapping to a plugin/theme slug (medium) → `__unknown__` (low).
-   User is `get_current_user_id()` / role, or `__system__` for cron/REST.
+   confidence order: credential match at the HTTP layer (`exact`) → self-ID action hook
+   (`wp_aiut_attribute`, high) → `debug_backtrace` path-mapping to a plugin/theme slug
+   (medium) → `__unknown__` (low). The `exact` tier comes from the HTTP guard (see below):
+   an outbound request that carries a configured connector credential is attributed with
+   certainty and its pending intent upgraded to `exact`. User is `get_current_user_id()` /
+   role, or `__system__` for cron/REST.
 
 **Watch:** if real-world data lands mostly as `estimated` or `__unknown__`, the capture
 design needs revisiting *before* any Phase 2 enforcement — never hard-block on numbers
@@ -111,11 +114,15 @@ uninstall.php                     drops tables/options only if opted in
 src/
   class-plugin.php                wiring (hooks capture/rest/admin)
   Capture/
-    class-gatekeeper.php          hooks wp_ai_client_prevent_prompt (OBSERVE ONLY); pending-intent registry
+    class-gatekeeper.php          hooks wp_ai_client_prevent_prompt (OBSERVE ONLY); pending-intent registry; enrich_latest_intent() upgrades an intent to exact
     class-result-capturer.php     primary: wp_ai_client_after_generate_result event (real DTO tokens); fallbacks: wpai hook / transporter / estimate
     class-chaining-transporter.php fallback decorator that chains, never replaces
+    class-connector-key-index.php builds {credential -> connector_id} from core wp_get_connectors(); scans a request's URL+headers for a configured key
+    class-http-guard.php          hooks pre_http_request; exact connector attribution + optional enforcement (2nd enforce point); OBSERVE ONLY until a hard limit; fails open
   Attribution/
-    class-caller-resolver.php     self-ID -> backtrace -> unknown; user/role
+    class-caller-resolver.php     exact (HTTP guard) -> self-ID -> backtrace -> unknown; user/role
+  Interop/
+    class-connector-approval-bridge.php  read-only view of the WP AI plugin's "Connector Approval" experiment (its blocks never reach our capture path)
   Accounting/
     class-usage-recorder.php      single entry point: ::record($row) — writes event + fans out counters
     class-counter-store.php       atomic INSERT ... ON DUPLICATE KEY UPDATE
@@ -128,7 +135,7 @@ src/
   Admin/
     class-rest-controller.php     namespace wp-aiut/v1
     class-settings-page.php       Tools -> AI Usage; enqueues the React build
-assets/src/{index.js,App.js,style.scss}   React dashboard (four views, spec §7)
+assets/src/{index.js,App.js,style.scss}   React dashboard (four views, spec §7; + a Connector-Approval interop panel)
 ```
 
 ### Data model
@@ -152,21 +159,34 @@ Tables are `{prefix}aiut_*` — `$wpdb->prefix` already ends in `_`, so the help
 - `src/Enforcement/class-enforcer.php`: `should_block(scopes, confidence)` — fast-path
   returns false when no hard limits; else first breach → `do_action('wp_aiut_blocked')`
   + return true. **Fails open** on any error.
-- The Gatekeeper builds `scopes = {plugin, user, role, global}` (no model pre-request) and
-  calls the Enforcer after recording the intent.
+- **Two enforcement points, one shared Enforcer** (wired in `Plugin::register_runtime`
+  with a shared `Caller_Resolver` + `Enforcer`):
+  - The Gatekeeper (`wp_ai_client_prevent_prompt`, pre-request) builds
+    `scopes = {plugin, user, role, global}` (no model pre-request) and calls the Enforcer
+    after recording the intent; a `true` return blocks the prompt.
+  - The `Http_Guard` (`pre_http_request`, pri 5) matches the exact connector by credential,
+    then calls the same Enforcer with `exact` confidence; a `true` return is translated into
+    a `WP_Error` 403 that short-circuits the HTTP call. This also covers callers that bypass
+    `wp_ai_client_prompt()` and hit the provider API directly. No double-block: a prompt
+    blocked at the pre-request hook never makes an HTTP request. Same observe-only /
+    fail-open invariants as the Gatekeeper.
 - `src/Alerts/`: `Threshold_Watcher` (hooks `wp_aiut_usage_recorded`, detects
   80%/100% crossings, per-period transient dedup) + `Notifier` (`wp_mail`, plus
   `wp_aiut_notify` action and `wp_aiut_alert_email` filter).
 - Confidence gating answers "we can't assume plugins self-identify": **backtrace is the
-  no-cooperation default** (medium); self-ID is an optional accuracy upgrade (high). Hard
-  limits default to blocking medium+high; a limit's `min_confidence = high` restricts it to
-  self-identified callers only. `__unknown__` is never singled out (but can be capped as a
-  group via a global/wildcard limit).
+  no-cooperation default** (medium); self-ID is an optional accuracy upgrade (high);
+  `exact` (HTTP-guard credential match) outranks both. `Limit_Evaluator` ranks
+  low<medium<high<exact, so `exact` satisfies every `min_confidence` gate. Hard limits
+  default to blocking medium+high (and thus exact); a limit's `min_confidence = high`
+  restricts it to self-identified/exact callers only. `__unknown__` is never singled out
+  (but can be capped as a group via a global/wildcard limit).
 
 ### REST (namespace `wp-aiut/v1`, cap `manage_options`, filterable)
 `GET /usage`, `GET /timeseries`, `GET /totals`, `GET /pricing`, `PUT /pricing`,
-`GET /scopes`, and (Phase 2) `GET/POST /limits`, `PUT/DELETE /limits/{id}`. All reads
-delegate to `Usage_Repository`; pricing to `Cost_Calculator`; limits to `Limit_Repository`.
+`GET /scopes`, `GET /connector-approvals` (interop, read-only), and (Phase 2)
+`GET/POST /limits`, `PUT/DELETE /limits/{id}`. All reads delegate to `Usage_Repository`;
+pricing to `Cost_Calculator`; limits to `Limit_Repository`; connector-approvals to
+`Connector_Approval_Bridge`.
 
 ### Dashboard (Tools → AI Usage)
 React + `@wordpress/scripts` + `@wordpress/components`. Four views: totals strip,

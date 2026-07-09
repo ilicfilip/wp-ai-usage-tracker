@@ -123,12 +123,28 @@ class Limit_Evaluator_Test extends AIUT_TestCase {
 	}
 
 	/**
-	 * confidence_allows ranks low < medium < high.
+	 * confidence_allows ranks low < medium < high < exact.
 	 */
 	public function test_confidence_allows_ranking() {
 		$this->assertTrue( $this->evaluator->confidence_allows( 'high', 'medium' ) );
 		$this->assertTrue( $this->evaluator->confidence_allows( 'medium', 'medium' ) );
 		$this->assertFalse( $this->evaluator->confidence_allows( 'low', 'medium' ) );
 		$this->assertFalse( $this->evaluator->confidence_allows( 'medium', 'high' ) );
+
+		// `exact` (the HTTP-guard credential-match tier) outranks self-ID, so it
+		// satisfies every configurable min_confidence gate.
+		$this->assertTrue( $this->evaluator->confidence_allows( 'exact', 'medium' ) );
+		$this->assertTrue( $this->evaluator->confidence_allows( 'exact', 'high' ) );
+	}
+
+	/**
+	 * An `exact`-confidence request satisfies a min_confidence=high hard limit and
+	 * is therefore a breach (the tier must not fall through to the `low` default).
+	 */
+	public function test_exact_confidence_satisfies_high_gate() {
+		$this->repo->save( $this->base_limit( [ 'min_confidence' => 'high' ] ) );
+		$this->seed_plugin_month_usage( 'acme', [ 'est_cost_micros' => 5000 ] );
+
+		$this->assertIsArray( $this->evaluator->first_hard_breach( [ 'plugin' => 'acme' ], 'exact' ) );
 	}
 }

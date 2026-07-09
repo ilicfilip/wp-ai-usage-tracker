@@ -135,13 +135,8 @@ class Connector_Key_Index {
 	 * @return array<string,string>
 	 */
 	private function build_index() {
-		$index = [];
-
-		if ( ! function_exists( 'wp_get_connectors' ) ) {
-			return $index;
-		}
-
-		$connectors = wp_get_connectors();
+		$index      = [];
+		$connectors = $this->get_connectors();
 
 		if ( ! is_array( $connectors ) ) {
 			return $index;
@@ -170,6 +165,25 @@ class Connector_Key_Index {
 		}
 
 		return $index;
+	}
+
+	/**
+	 * Return the registered connectors keyed by ID.
+	 *
+	 * Reads WordPress core's connector registry, runtime-guarded so the class is
+	 * inert (and analysable) when the WP 7.0 connector API is absent. A protected
+	 * seam so tests can supply a fixed connector set without touching core state.
+	 *
+	 * @return array<string,mixed> Connector data keyed by connector ID.
+	 */
+	protected function get_connectors() {
+		if ( ! function_exists( 'wp_get_connectors' ) ) {
+			return [];
+		}
+
+		$connectors = wp_get_connectors();
+
+		return is_array( $connectors ) ? $connectors : [];
 	}
 
 	/**

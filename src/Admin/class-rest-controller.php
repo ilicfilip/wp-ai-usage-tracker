@@ -155,6 +155,19 @@ class Rest_Controller {
 			]
 		);
 
+		// Interop: state of the WordPress/ai "Connector Approval" experiment.
+		register_rest_route(
+			self::NAMESPACE,
+			'/connector-approvals',
+			[
+				[
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => [ $this, 'get_connector_approvals' ],
+					'permission_callback' => [ $this, 'check_permission' ],
+				],
+			]
+		);
+
 		// Limits collection: list + create (Phase 2).
 		register_rest_route(
 			self::NAMESPACE,
@@ -470,6 +483,26 @@ class Rest_Controller {
 				'models'  => is_array( $models ) ? array_values( $models ) : [],
 			]
 		);
+	}
+
+	/**
+	 * GET /connector-approvals — interop state of the WordPress/ai
+	 * "Connector Approval" experiment.
+	 *
+	 * Returns {active:false} when that experiment is off. When on, returns its
+	 * pending (blocked) queue and approval matrix, read-only, so the dashboard can
+	 * surface upstream blocks that never reach our capture path. Degrades to
+	 * {active:false} when the bridge class is unavailable.
+	 *
+	 * @return \WP_REST_Response
+	 */
+	public function get_connector_approvals() {
+		if ( class_exists( '\\WP_AIUT\\Interop\\Connector_Approval_Bridge' ) ) {
+			$bridge = new \WP_AIUT\Interop\Connector_Approval_Bridge();
+			return rest_ensure_response( $bridge->get_state() );
+		}
+
+		return rest_ensure_response( [ 'active' => false ] );
 	}
 
 	/**

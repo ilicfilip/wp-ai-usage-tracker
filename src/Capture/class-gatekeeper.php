@@ -365,6 +365,69 @@ class Gatekeeper {
 	}
 
 	/**
+	 * Enrich the newest un-finalised pending intent with exact connector
+	 * attribution discovered at the HTTP layer.
+	 *
+	 * The Http_Guard fires on 'pre_http_request' for the very request whose
+	 * intent the prevent-prompt hook just recorded, and it knows — from a
+	 * credential match in the outbound request — the exact connector and (via the
+	 * backtrace) the caller. We upgrade that intent's attribution to 'exact'
+	 * confidence and stamp the connector_id so the Result_Capturer persists the
+	 * better attribution.
+	 *
+	 * Safe no-op when no un-finalised intent exists: a caller that bypasses
+	 * wp_ai_client_prompt() and hits the provider API directly has no recorded
+	 * intent — that path is enforcement-only, never tracked through intents.
+	 *
+	 * @param string              $connector_id Connector the request is using.
+	 * @param array<string,mixed> $caller       Resolved caller
+	 *                                           (source_slug, source_type[, confidence]).
+	 * @return void
+	 */
+	public function enrich_latest_intent( $connector_id, array $caller ) {
+		try {
+			$best_key = null;
+			$best     = null;
+			$min_age  = microtime( true ) - $this->match_max_age();
+
+			foreach ( self::$pending as $key => $intent ) {
+				if ( ! empty( $intent['finalized'] ) ) {
+					continue;
+				}
+
+				if ( isset( $intent['created_at'] ) && $intent['created_at'] < $min_age ) {
+					continue;
+				}
+
+				if ( null === $best || $intent['created_at'] >= $best['created_at'] ) {
+					$best     = $intent;
+					$best_key = $key;
+				}
+			}
+
+			if ( null === $best_key ) {
+				return;
+			}
+
+			self::$pending[ $best_key ]['connector_id'] = (string) $connector_id;
+			self::$pending[ $best_key ]['confidence']   = Caller_Resolver::CONFIDENCE_EXACT;
+
+			// The credential match plus the HTTP-layer backtrace give a more
+			// reliable caller than the pre-request resolution; adopt it when present.
+			if ( isset( $caller['source_slug'] ) && '' !== (string) $caller['source_slug'] ) {
+				self::$pending[ $best_key ]['source_slug'] = (string) $caller['source_slug'];
+			}
+
+			if ( isset( $caller['source_type'] ) && '' !== (string) $caller['source_type'] ) {
+				self::$pending[ $best_key ]['source_type'] = (string) $caller['source_type'];
+			}
+		} catch ( \Throwable $e ) {
+			// Enrichment is best-effort; never let it disturb the request.
+			unset( $e );
+		}
+	}
+
+	/**
 	 * Mark a pending intent finalised so it is not matched again.
 	 *
 	 * @param string $fingerprint The intent's fingerprint key.

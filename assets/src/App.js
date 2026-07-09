@@ -17,7 +17,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 
 import Limits from './Limits';
 import {
@@ -945,9 +945,134 @@ export default function App( { config } ) {
 				</>
 			) : null }
 
+			{ /* Interop: blocks from the WordPress AI plugin's Connector
+			     Approval experiment never reach our capture path, so surface
+			     them here. Self-fetching; renders nothing when inactive. */ }
+			{ ! loading && ! error ? <ConnectorApprovalPanel /> : null }
+
 			{ /* Limits management is always available, even with no usage yet. */ }
 			{ ! loading && ! error ? <Limits /> : null }
 		</div>
+	);
+}
+
+/**
+ * Interop panel for the WordPress AI plugin's "Connector Approval" experiment.
+ *
+ * That experiment blocks unapproved plugin/connector pairs at the HTTP layer,
+ * before a result is generated — so those blocked requests are invisible to our
+ * usage tracking. When the experiment is active we surface its pending (blocked)
+ * queue here so the gap is visible and explained. Renders nothing when the
+ * experiment is off or the endpoint is unavailable.
+ *
+ * @return {JSX.Element|null} The panel, or null when inactive.
+ */
+function ConnectorApprovalPanel() {
+	const [ state, setState ] = useState( null );
+
+	useEffect( () => {
+		let cancelled = false;
+		apiFetch( { path: 'wp-aiut/v1/connector-approvals' } )
+			.then( ( res ) => {
+				if ( ! cancelled ) {
+					setState( res || null );
+				}
+			} )
+			.catch( () => {
+				// Non-fatal: the panel simply does not render.
+				if ( ! cancelled ) {
+					setState( null );
+				}
+			} );
+		return () => {
+			cancelled = true;
+		};
+	}, [] );
+
+	if ( ! state || ! state.active ) {
+		return null;
+	}
+
+	const pending = Array.isArray( state.pending ) ? state.pending : [];
+	const totalBlocked = pending.reduce(
+		( sum, row ) => sum + ( Number( row.attempts ) || 0 ),
+		0
+	);
+
+	return (
+		<section className="wp-aiut-section">
+			<Card className="wp-aiut-card">
+				<CardHeader>
+					<h2>
+						{ __( 'Blocked by Connector Approval', 'wp-aiut' ) }
+					</h2>
+				</CardHeader>
+				<CardBody>
+					<p className="wp-aiut-muted">
+						{ __(
+							'The WordPress AI plugin’s Connector Approval experiment is active. It blocks unapproved plugins from using a connector before the request runs, so these attempts are not counted in the usage above.',
+							'wp-aiut'
+						) }
+					</p>
+
+					{ pending.length === 0 ? (
+						<p>
+							{ __(
+								'No blocked requests are currently pending review.',
+								'wp-aiut'
+							) }
+						</p>
+					) : (
+						<>
+							<p>
+								{ sprintf(
+									/* translators: 1: number of blocked attempts, 2: number of distinct plugin/connector pairs. */
+									__(
+										'%1$s blocked request(s) across %2$s plugin/connector pair(s):',
+										'wp-aiut'
+									),
+									formatNumber( totalBlocked ),
+									formatNumber( pending.length )
+								) }
+							</p>
+							<table className="wp-aiut-table">
+								<thead>
+									<tr>
+										<th>{ __( 'Plugin / theme', 'wp-aiut' ) }</th>
+										<th>{ __( 'Connector', 'wp-aiut' ) }</th>
+										<th className="wp-aiut-num">
+											{ __( 'Attempts', 'wp-aiut' ) }
+										</th>
+									</tr>
+								</thead>
+								<tbody>
+									{ pending.map( ( row ) => (
+										<tr
+											key={ `${ row.caller_basename }::${ row.connector_id }` }
+										>
+											<td>
+												{ row.caller_name ||
+													row.caller_basename ||
+													__(
+														'Unknown',
+														'wp-aiut'
+													) }
+											</td>
+											<td>{ row.connector_id }</td>
+											<td className="wp-aiut-num">
+												{ formatNumber(
+													row.attempts
+												) }
+											</td>
+										</tr>
+									) ) }
+								</tbody>
+							</table>
+						</>
+					) }
+				</CardBody>
+			</Card>
+		</section>
 	);
 }
 

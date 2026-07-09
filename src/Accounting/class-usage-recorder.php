@@ -159,7 +159,7 @@ class Usage_Recorder {
 		}
 
 		$confidence = isset( $row['plugin_confidence'] ) ? sanitize_key( (string) $row['plugin_confidence'] ) : 'low';
-		if ( ! in_array( $confidence, [ 'high', 'medium', 'low' ], true ) ) {
+		if ( ! in_array( $confidence, [ 'exact', 'high', 'medium', 'low' ], true ) ) {
 			$confidence = 'low';
 		}
 

@@ -31,6 +31,11 @@ class Limit_Evaluator {
 		'low'    => 0,
 		'medium' => 1,
 		'high'   => 2,
+		// The Http_Guard matched a configured connector credential in the
+		// outbound request, so attribution is certain — ranks above self-ID.
+		// A limit's min_confidence is only ever 'medium'|'high', so 'exact'
+		// satisfies every gate.
+		'exact'  => 3,
 	];
 
 	/**

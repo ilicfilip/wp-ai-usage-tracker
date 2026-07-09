@@ -34,6 +34,13 @@ class Plugin {
 	private $gatekeeper = null;
 
 	/**
+	 * HTTP-layer guard: exact connector attribution + optional enforcement.
+	 *
+	 * @var \WP_AIUT\Capture\Http_Guard|null
+	 */
+	private $http_guard = null;
+
+	/**
 	 * Admin settings page.
 	 *
 	 * @var \WP_AIUT\Admin\Settings_Page|null
@@ -96,11 +103,41 @@ class Plugin {
 	 * @return void
 	 */
 	public function register_runtime() {
+		// Shared collaborators so the pre-request hook (Gatekeeper) and the HTTP
+		// guard resolve attribution and evaluate limits identically.
+		$resolver = class_exists( '\\WP_AIUT\\Attribution\\Caller_Resolver' )
+			? new \WP_AIUT\Attribution\Caller_Resolver()
+			: null;
+		$enforcer = class_exists( '\\WP_AIUT\\Enforcement\\Enforcer' )
+			? new \WP_AIUT\Enforcement\Enforcer()
+			: null;
+
 		if ( null === $this->gatekeeper && class_exists( '\\WP_AIUT\\Capture\\Gatekeeper' ) ) {
-			$this->gatekeeper = new \WP_AIUT\Capture\Gatekeeper();
+			$this->gatekeeper = new \WP_AIUT\Capture\Gatekeeper( $resolver, null, $enforcer );
 
 			if ( method_exists( $this->gatekeeper, 'register' ) ) {
 				$this->gatekeeper->register();
+			}
+		}
+
+		// HTTP-layer guard: exact connector attribution + optional enforcement.
+		// Reuses the same resolver + enforcer, and enriches the Gatekeeper's
+		// pending intents with exact attribution.
+		if ( null === $this->http_guard
+			&& null !== $this->gatekeeper
+			&& $resolver instanceof \WP_AIUT\Attribution\Caller_Resolver
+			&& class_exists( '\\WP_AIUT\\Capture\\Http_Guard' )
+			&& class_exists( '\\WP_AIUT\\Capture\\Connector_Key_Index' ) ) {
+
+			$this->http_guard = new \WP_AIUT\Capture\Http_Guard(
+				new \WP_AIUT\Capture\Connector_Key_Index(),
+				$resolver,
+				$enforcer,
+				$this->gatekeeper
+			);
+
+			if ( method_exists( $this->http_guard, 'register' ) ) {
+				$this->http_guard->register();
 			}
 		}
 

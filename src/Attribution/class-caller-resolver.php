@@ -13,6 +13,12 @@ defined( 'ABSPATH' ) || exit;
  * Resolves which plugin/theme and which user triggered an AI Client prompt.
  *
  * Layered, most-reliable first (spec §4 / Architecture §5):
+ *   0. Exact         (exact)  — the outbound HTTP request carried a configured
+ *                               connector credential, so the connector (and, via
+ *                               the backtrace, the caller) is known for certain.
+ *                               Set by the Http_Guard AFTER the pre-request hook,
+ *                               not produced by resolve() itself; see
+ *                               Connector_Key_Index / Http_Guard.
  *   1. Self-ID hook  (high)   — cooperating plugins call
  *                               do_action( 'wp_aiut_attribute', 'slug' )
  *                               before their prompt; we read the top of a
@@ -31,6 +37,13 @@ class Caller_Resolver {
 	 * Attribution action other plugins call to self-identify.
 	 */
 	const ATTRIBUTE_ACTION = 'wp_aiut_attribute';
+
+	/**
+	 * Highest confidence tier: the request carried a configured connector
+	 * credential, so attribution is certain (set by the Http_Guard, above the
+	 * self-ID 'high' tier). resolve() never returns this itself.
+	 */
+	const CONFIDENCE_EXACT = 'exact';
 
 	/**
 	 * Slug used when no caller can be resolved.

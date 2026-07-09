@@ -17,7 +17,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 
 import Limits from './Limits';
 import {
@@ -299,10 +299,7 @@ function RankedBreakdown( { scopeType, rows, nameHeader } ) {
 	if ( ! rows.length ) {
 		return (
 			<p className="wp-aiut-muted">
-				{ __(
-					'No usage recorded for this period yet.',
-					'wp-aiut'
-				) }
+				{ __( 'No usage recorded for this period yet.', 'wp-aiut' ) }
 			</p>
 		);
 	}
@@ -439,10 +436,7 @@ function TimeSeriesChart( { series, metric } ) {
 	if ( ! geom ) {
 		return (
 			<p className="wp-aiut-muted">
-				{ __(
-					'No data points in this range yet.',
-					'wp-aiut'
-				) }
+				{ __( 'No data points in this range yet.', 'wp-aiut' ) }
 			</p>
 		);
 	}
@@ -560,14 +554,11 @@ function TimeSeriesChart( { series, metric } ) {
  * @return {JSX.Element} Empty state card.
  */
 function EmptyState( { config } ) {
-	const hook =
-		( config && config.attribute ) || 'wp_aiut_attribute';
+	const hook = ( config && config.attribute ) || 'wp_aiut_attribute';
 	return (
 		<Card className="wp-aiut-empty">
 			<CardBody>
-				<h2>
-					{ __( 'No AI usage recorded yet', 'wp-aiut' ) }
-				</h2>
+				<h2>{ __( 'No AI usage recorded yet', 'wp-aiut' ) }</h2>
 				<p>
 					{ __(
 						'Once a plugin or theme makes a WordPress AI Client request, it appears here attributed to the originating plugin and the current user.',
@@ -734,9 +725,7 @@ export default function App( { config } ) {
 			{ loading ? (
 				<div className="wp-aiut-loading">
 					<Spinner />
-					<span>
-						{ __( 'Loading usage…', 'wp-aiut' ) }
-					</span>
+					<span>{ __( 'Loading usage…', 'wp-aiut' ) }</span>
 				</div>
 			) : null }
 
@@ -751,10 +740,7 @@ export default function App( { config } ) {
 						<Flex className="wp-aiut-stats" gap={ 4 } wrap>
 							<FlexItem isBlock>
 								<StatCard
-									label={ __(
-										'Estimated spend',
-										'wp-aiut'
-									) }
+									label={ __( 'Estimated spend', 'wp-aiut' ) }
 									value={ formatMoney(
 										totalRow.est_cost_micros
 									) }
@@ -763,20 +749,14 @@ export default function App( { config } ) {
 							</FlexItem>
 							<FlexItem isBlock>
 								<StatCard
-									label={ __(
-										'Requests',
-										'wp-aiut'
-									) }
+									label={ __( 'Requests', 'wp-aiut' ) }
 									value={ formatNumber( totalRow.requests ) }
 									hint={ periodLabel }
 								/>
 							</FlexItem>
 							<FlexItem isBlock>
 								<StatCard
-									label={ __(
-										'Total tokens',
-										'wp-aiut'
-									) }
+									label={ __( 'Total tokens', 'wp-aiut' ) }
 									value={ formatNumber(
 										totalTokens( totalRow )
 									) }
@@ -787,10 +767,7 @@ export default function App( { config } ) {
 										'wp-aiut'
 									) } / ${ formatNumber(
 										totalRow.output_tokens
-									) } ${ __(
-										'out',
-										'wp-aiut'
-									) }` }
+									) } ${ __( 'out', 'wp-aiut' ) }` }
 								/>
 							</FlexItem>
 						</Flex>
@@ -815,10 +792,7 @@ export default function App( { config } ) {
 						<Card className="wp-aiut-card">
 							<CardHeader>
 								<strong>
-									{ __(
-										'Spend per plugin',
-										'wp-aiut'
-									) }
+									{ __( 'Spend per plugin', 'wp-aiut' ) }
 								</strong>
 								<span className="wp-aiut-muted">
 									{ __(
@@ -831,10 +805,7 @@ export default function App( { config } ) {
 								<RankedBreakdown
 									scopeType="plugin"
 									rows={ plugins }
-									nameHeader={ __(
-										'Plugin',
-										'wp-aiut'
-									) }
+									nameHeader={ __( 'Plugin', 'wp-aiut' ) }
 								/>
 							</CardBody>
 						</Card>
@@ -845,20 +816,14 @@ export default function App( { config } ) {
 						<Card className="wp-aiut-card">
 							<CardHeader>
 								<strong>
-									{ __(
-										'Spend per person',
-										'wp-aiut'
-									) }
+									{ __( 'Spend per person', 'wp-aiut' ) }
 								</strong>
 								<ToggleGroupControl
 									__nextHasNoMarginBottom
 									__next40pxDefaultSize
 									hideLabelFromVision
 									isBlock
-									label={ __(
-										'Group by',
-										'wp-aiut'
-									) }
+									label={ __( 'Group by', 'wp-aiut' ) }
 									value={ peopleScope }
 									onChange={ ( value ) =>
 										setPeopleScope( value )
@@ -866,17 +831,11 @@ export default function App( { config } ) {
 								>
 									<ToggleGroupControlOption
 										value="user"
-										label={ __(
-											'By user',
-											'wp-aiut'
-										) }
+										label={ __( 'By user', 'wp-aiut' ) }
 									/>
 									<ToggleGroupControlOption
 										value="role"
-										label={ __(
-											'By role',
-											'wp-aiut'
-										) }
+										label={ __( 'By role', 'wp-aiut' ) }
 									/>
 								</ToggleGroupControl>
 							</CardHeader>
@@ -899,20 +858,14 @@ export default function App( { config } ) {
 						<Card className="wp-aiut-card">
 							<CardHeader>
 								<strong>
-									{ __(
-										'Usage over time',
-										'wp-aiut'
-									) }
+									{ __( 'Usage over time', 'wp-aiut' ) }
 								</strong>
 								<ToggleGroupControl
 									__nextHasNoMarginBottom
 									__next40pxDefaultSize
 									hideLabelFromVision
 									isBlock
-									label={ __(
-										'Metric',
-										'wp-aiut'
-									) }
+									label={ __( 'Metric', 'wp-aiut' ) }
 									value={ chartMetric }
 									onChange={ ( value ) =>
 										setChartMetric( value )
@@ -920,17 +873,11 @@ export default function App( { config } ) {
 								>
 									<ToggleGroupControlOption
 										value="cost"
-										label={ __(
-											'Cost',
-											'wp-aiut'
-										) }
+										label={ __( 'Cost', 'wp-aiut' ) }
 									/>
 									<ToggleGroupControlOption
 										value="tokens"
-										label={ __(
-											'Tokens',
-											'wp-aiut'
-										) }
+										label={ __( 'Tokens', 'wp-aiut' ) }
 									/>
 								</ToggleGroupControl>
 							</CardHeader>
@@ -945,9 +892,136 @@ export default function App( { config } ) {
 				</>
 			) : null }
 
+			{ /* Interop: blocks from the WordPress AI plugin's Connector
+			     Approval experiment never reach our capture path, so surface
+			     them here. Self-fetching; renders nothing when inactive. */ }
+			{ ! loading && ! error ? <ConnectorApprovalPanel /> : null }
+
 			{ /* Limits management is always available, even with no usage yet. */ }
 			{ ! loading && ! error ? <Limits /> : null }
 		</div>
+	);
+}
+
+/**
+ * Interop panel for the WordPress AI plugin's "Connector Approval" experiment.
+ *
+ * That experiment blocks unapproved plugin/connector pairs at the HTTP layer,
+ * before a result is generated — so those blocked requests are invisible to our
+ * usage tracking. When the experiment is active we surface its pending (blocked)
+ * queue here so the gap is visible and explained. Renders nothing when the
+ * experiment is off or the endpoint is unavailable.
+ *
+ * @return {JSX.Element|null} The panel, or null when inactive.
+ */
+function ConnectorApprovalPanel() {
+	const [ state, setState ] = useState( null );
+
+	useEffect( () => {
+		let cancelled = false;
+		apiFetch( { path: 'wp-aiut/v1/connector-approvals' } )
+			.then( ( res ) => {
+				if ( ! cancelled ) {
+					setState( res || null );
+				}
+			} )
+			.catch( () => {
+				// Non-fatal: the panel simply does not render.
+				if ( ! cancelled ) {
+					setState( null );
+				}
+			} );
+		return () => {
+			cancelled = true;
+		};
+	}, [] );
+
+	if ( ! state || ! state.active ) {
+		return null;
+	}
+
+	const pending = Array.isArray( state.pending ) ? state.pending : [];
+	const totalBlocked = pending.reduce(
+		( sum, row ) => sum + ( Number( row.attempts ) || 0 ),
+		0
+	);
+
+	return (
+		<section className="wp-aiut-section">
+			<Card className="wp-aiut-card">
+				<CardHeader>
+					<h2>
+						{ __( 'Blocked by Connector Approval', 'wp-aiut' ) }
+					</h2>
+				</CardHeader>
+				<CardBody>
+					<p className="wp-aiut-muted">
+						{ __(
+							'The WordPress AI plugin’s Connector Approval experiment is active. It blocks unapproved plugins from using a connector before the request runs, so these attempts are not counted in the usage above.',
+							'wp-aiut'
+						) }
+					</p>
+
+					{ pending.length === 0 ? (
+						<p>
+							{ __(
+								'No blocked requests are currently pending review.',
+								'wp-aiut'
+							) }
+						</p>
+					) : (
+						<>
+							<p>
+								{ sprintf(
+									/* translators: 1: number of blocked attempts, 2: number of distinct plugin/connector pairs. */
+									__(
+										'%1$s blocked request(s) across %2$s plugin/connector pair(s):',
+										'wp-aiut'
+									),
+									formatNumber( totalBlocked ),
+									formatNumber( pending.length )
+								) }
+							</p>
+							<table className="wp-aiut-table">
+								<thead>
+									<tr>
+										<th>
+											{ __(
+												'Plugin / theme',
+												'wp-aiut'
+											) }
+										</th>
+										<th>
+											{ __( 'Connector', 'wp-aiut' ) }
+										</th>
+										<th className="wp-aiut-num">
+											{ __( 'Attempts', 'wp-aiut' ) }
+										</th>
+									</tr>
+								</thead>
+								<tbody>
+									{ pending.map( ( row ) => (
+										<tr
+											key={ `${ row.caller_basename }::${ row.connector_id }` }
+										>
+											<td>
+												{ row.caller_name ||
+													row.caller_basename ||
+													__( 'Unknown', 'wp-aiut' ) }
+											</td>
+											<td>{ row.connector_id }</td>
+											<td className="wp-aiut-num">
+												{ formatNumber( row.attempts ) }
+											</td>
+										</tr>
+									) ) }
+								</tbody>
+							</table>
+						</>
+					) }
+				</CardBody>
+			</Card>
+		</section>
 	);
 }
 
@@ -968,10 +1042,7 @@ function ProviderModelBreakdown( { totals } ) {
 	if ( ! byProvider.length && ! byModel.length ) {
 		return (
 			<p className="wp-aiut-muted">
-				{ __(
-					'No provider data for this period.',
-					'wp-aiut'
-				) }
+				{ __( 'No provider data for this period.', 'wp-aiut' ) }
 			</p>
 		);
 	}
@@ -989,20 +1060,14 @@ function ProviderModelBreakdown( { totals } ) {
 							<li key={ r.provider }>
 								<span>
 									{ r.provider ||
-										__(
-											'(unknown)',
-											'wp-aiut'
-										) }
+										__( '(unknown)', 'wp-aiut' ) }
 								</span>
 								<span className="wp-aiut-cost">
 									{ formatMoney( r.est_cost_micros ) }
 									{ estimated ? (
 										<ConfidenceBadge
 											level="low"
-											label={ __(
-												'est.',
-												'wp-aiut'
-											) }
+											label={ __( 'est.', 'wp-aiut' ) }
 										/>
 									) : null }
 								</span>

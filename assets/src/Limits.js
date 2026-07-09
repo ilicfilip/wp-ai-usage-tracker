@@ -155,10 +155,7 @@ export default function Limits() {
 			} );
 			setLimits( ( res && res.limits ) || [] );
 		} catch ( e ) {
-			setError(
-				e.message ||
-					__( 'Failed to load limits.', 'wp-aiut' )
-			);
+			setError( e.message || __( 'Failed to load limits.', 'wp-aiut' ) );
 		} finally {
 			setLoading( false );
 		}
@@ -201,8 +198,7 @@ export default function Limits() {
 			await load();
 		} catch ( e ) {
 			setError(
-				e.message ||
-					__( 'Failed to save the limit.', 'wp-aiut' )
+				e.message || __( 'Failed to save the limit.', 'wp-aiut' )
 			);
 		} finally {
 			setSaving( false );
@@ -226,8 +222,7 @@ export default function Limits() {
 			await load();
 		} catch ( e ) {
 			setError(
-				e.message ||
-					__( 'Failed to delete the limit.', 'wp-aiut' )
+				e.message || __( 'Failed to delete the limit.', 'wp-aiut' )
 			);
 		}
 	};
@@ -470,10 +465,7 @@ function LimitForm( { draft, set, onSave, onCancel, saving } ) {
 						<SelectControl
 							__next40pxDefaultSize
 							__nextHasNoMarginBottom
-							label={ __(
-								'Min confidence to block',
-								'wp-aiut'
-							) }
+							label={ __( 'Min confidence to block', 'wp-aiut' ) }
 							help={ __(
 								'High = only block plugins that self-identify.',
 								'wp-aiut'
